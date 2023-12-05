@@ -1,38 +1,14 @@
-% = pre-processing for DM stim HVC inactivation ==
+% dmStim_hvc_preProcessing.m
+% EK
+% 2023.12 edited by CR
+% 
+% pre-processing for DM stim with HVC pharmacology
 % 
 
-% clear all;
+clear;
 
 bird = 'pu65bk36';
-
-path = ...
-        '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230307_pu65bk36/baseline/25uA/25uA_230307_152126/';
-
-%         '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/14uA/400Hz_50ms_14uA_230221_170938/';
-
-%         '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/washout/14uA/400hz_50ms_14uA_230221_181323/';
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/washout_gabazine/20uA/400Hz_50ms_20uA_230221_204142/';
-
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/baseline/14uA/400Hz_50ms_14uA_230221_152905/';
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/14uA/400Hz_50ms_14uA_230221_170938/';
-%         '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/10uA/400hz_50ms_10uA_230221_172737/';
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/washout/10uA/400hz_50ms_10uA_230221_185316/';
-%         '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/gabazine_50uM/14uA/400Hz_50ms_14uA_230221_191950/';
-
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/gabazine_50uM/14uA/400Hz_50ms_14uA_230221_191950/';
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/10uA/400hz_50ms_10uA_230221_172737/';
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/washout/10uA/400hz_50ms_10uA_230221_185316/';
-
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/washout_2/20uA/400Hz_50ms_20uA_230221_204142/';
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/gabazine_50uM/14uA/400Hz_50ms_14uA_230221_191950/';
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/baseline/14uA/400Hz_50ms_14uA_230221_155503/';
-%         '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/14uA/400Hz_50ms_14uA_230221_170400/'
-%     '/Users/eszterkish/Documents/Data/DMstim_airsac/020421_or25bk5/400Hz stim/100ms/';
+data_root = "/Users/cirorandazzo/ek-spectral-analysis/pu65bk36/";
 
 %% == design filter for zero phase filtering ==
 N = 30;
@@ -44,23 +20,32 @@ fs = 30000;
 deq = designfilt('lowpassfir','FilterOrder',N,'PassbandFrequency',Fpass,...
   'StopbandFrequency',Fstop,'SampleRate',fs);
 
-%% == for baseline 14uA ==
-path = ...
-        '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230307_pu65bk36/baseline/25uA/25uA_230307_152126/';
+%% get filelist
 
-cd(path)
-files = dir('*.rhs');
+file_list = loadFileList(data_root);
 
-clear data
-for i = 1 : length(files)
-    fn = files(i).name;
-    ek_read_Intan_RHS2000_file(fn, path);
-    
-    data(i).fs = frequency_parameters.amplifier_sample_rate;
-    data(i).sound = board_adc_data(1, :);
-    data(i).breathing = board_adc_data(2, :);
-    data(i).stim = board_dig_in_data; %stim_data(stimChan, :);
+
+%% load data
+
+
+for i = length(file_list):-1:1   % create struct backwards, preallocates for speed
+    fn = file_list(i).name;
+    path = file_list(i).folder;
+
+    c = ek_read_Intan_RHS2000_file(fn, path);
+
+    data(i).drug =  file_list(i).drug;
+    data(i).current=file_list(i).current;    
+
+    data(i).fs =    c.frequency_parameters.amplifier_sample_rate;
+    data(i).sound = c.board_adc_data(1, :);
+    data(i).stim =  c.board_dig_in_data; %stim_data(stimChan, :);
+    data(i).breathing=c.board_adc_data(2, :);
+
+    clear c;
 end
+
+% end CDR edits
 
 %% call params saline
 % call amplitude, pitch, duration, latency, insp depth, insp peak time

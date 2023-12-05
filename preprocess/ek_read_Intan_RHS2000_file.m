@@ -1,4 +1,4 @@
-function ek_read_Intan_RHS2000_file(file,path)
+function data_struct = ek_read_Intan_RHS2000_file(file,path)
 
 % read_Intan_RHS2000_file
 %
@@ -10,6 +10,10 @@ function ek_read_Intan_RHS2000_file(file,path)
 % execute a 'clear' command before running this program to clear all other
 % variables from the base workspace.
 %
+% 
+% 2023.12.05 edited by CDR
+% return struct instead of moving all vars to workspace
+% 
 % Example:
 % >> clear
 % >> read_Intan_RHS2000_file
@@ -25,7 +29,7 @@ function ek_read_Intan_RHS2000_file(file,path)
 % end
 
 tic;
-filename = [path,file];
+filename = fullfile(path, file);
 fid = fopen(filename, 'r');
 
 s = dir(filename);
@@ -443,59 +447,112 @@ if (data_present)
 end
 
 % Move variables to base workspace.
+% CDR 2023.12.05
+% this clutters up my workspace & i dont like it, so im going to return a
+%   struct
 
-move_to_base_workspace(notes);
-move_to_base_workspace(frequency_parameters);
-move_to_base_workspace(stim_parameters);
+data_struct = []
+
+data_struct.notes = notes;
+data_struct.frequency_parameters = frequency_parameters;
+data_struct.stim_parameters = stim_parameters;
 if (data_file_main_version_number > 1)
-    move_to_base_workspace(reference_channel);
+    data_struct.reference_channel = reference_channel;
 end
 
 if (num_amplifier_channels > 0)
-    move_to_base_workspace(amplifier_channels);
+    data_struct.amplifier_channels = amplifier_channels;
     if (data_present)
-        move_to_base_workspace(amplifier_data);
+        data_struct.amplifier_data = amplifier_data;
         if (dc_amp_data_saved ~= 0)
-            move_to_base_workspace(dc_amplifier_data);
+            data_struct.dc_amplifier_data = dc_amplifier_data;
         end
-        move_to_base_workspace(stim_data);
-        move_to_base_workspace(amp_settle_data);
-        move_to_base_workspace(charge_recovery_data);
-        move_to_base_workspace(compliance_limit_data);
-        move_to_base_workspace(t);
+        data_struct.stim_data=stim_data;
+        data_struct.amp_settle_data=amp_settle_data;
+        data_struct.charge_recovery_data=charge_recovery_data;
+        data_struct.compliance_limit_data=compliance_limit_data;
+        data_struct.t=t;
     end
-    move_to_base_workspace(spike_triggers);
+    data_struct.spike_triggers=spike_triggers;
 end
 if (num_board_adc_channels > 0)
-    move_to_base_workspace(board_adc_channels);
+    data_struct.board_adc_channels=board_adc_channels;
     if (data_present)
-        move_to_base_workspace(board_adc_data);
+        data_struct.board_adc_data=board_adc_data;
     end
 end
 if (num_board_dac_channels > 0)
-    move_to_base_workspace(board_dac_channels);
+    data_struct.board_dac_channels=board_dac_channels;
     if (data_present)
-        move_to_base_workspace(board_dac_data);
+        data_struct.board_dac_data=board_dac_data;
     end
 end
 if (num_board_dig_in_channels > 0)
-    move_to_base_workspace(board_dig_in_channels);
+    data_struct.board_dig_in_channels=board_dig_in_channels;
     if (data_present)
-        move_to_base_workspace(board_dig_in_data);
+        data_struct.board_dig_in_data=board_dig_in_data;
     end
 end
 if (num_board_dig_out_channels > 0)
-    move_to_base_workspace(board_dig_out_channels);
+    data_struct.board_dig_out_channels=board_dig_out_channels;
     if (data_present)
-        move_to_base_workspace(board_dig_out_data);
+        data_struct.board_dig_out_data=board_dig_out_data;
     end
 end
+% move_to_base_workspace(notes);
+% move_to_base_workspace(frequency_parameters);
+% move_to_base_workspace(stim_parameters);
+% if (data_file_main_version_number > 1)
+%     move_to_base_workspace(reference_channel);
+% end
+% 
+% if (num_amplifier_channels > 0)
+%     move_to_base_workspace(amplifier_channels);
+%     if (data_present)
+%         move_to_base_workspace(amplifier_data);
+%         if (dc_amp_data_saved ~= 0)
+%             move_to_base_workspace(dc_amplifier_data);
+%         end
+%         move_to_base_workspace(stim_data);
+%         move_to_base_workspace(amp_settle_data);
+%         move_to_base_workspace(charge_recovery_data);
+%         move_to_base_workspace(compliance_limit_data);
+%         move_to_base_workspace(t);
+%     end
+%     move_to_base_workspace(spike_triggers);
+% end
+% if (num_board_adc_channels > 0)
+%     move_to_base_workspace(board_adc_channels);
+%     if (data_present)
+%         move_to_base_workspace(board_adc_data);
+%     end
+% end
+% if (num_board_dac_channels > 0)
+%     move_to_base_workspace(board_dac_channels);
+%     if (data_present)
+%         move_to_base_workspace(board_dac_data);
+%     end
+% end
+% if (num_board_dig_in_channels > 0)
+%     move_to_base_workspace(board_dig_in_channels);
+%     if (data_present)
+%         move_to_base_workspace(board_dig_in_data);
+%     end
+% end
+% if (num_board_dig_out_channels > 0)
+%     move_to_base_workspace(board_dig_out_channels);
+%     if (data_present)
+%         move_to_base_workspace(board_dig_out_data);
+%     end
+% end
 
 fprintf(1, 'Done!  Elapsed time: %0.1f seconds\n', toc);
 if (data_present)
-    fprintf(1, 'Extracted data are now available in the MATLAB workspace.\n');
+    fprintf(1, 'Extracted data has been returned.\n');
+    % fprintf(1, 'Extracted data are now available in the MATLAB workspace.\n');
 else
-    fprintf(1, 'Extracted waveform information is now available in the MATLAB workspace.\n');
+    fprintf(1, 'Extracted waveform information has been returned.\n');
+    % fprintf(1, 'Extracted waveform information is now available in the MATLAB workspace.\n');
 end
 fprintf(1, 'Type ''whos'' to see variables.\n');
 fprintf(1, '\n');
