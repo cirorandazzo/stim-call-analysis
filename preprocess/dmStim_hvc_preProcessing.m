@@ -27,12 +27,17 @@ file_list = loadFileList(data_root);
 
 %% load data
 
+% to load only a certain condition, pare dowen file_list
+% TODO: add loadbar
 
+start = tic;
 for i = length(file_list):-1:1   % create struct backwards, preallocates for speed
+    filestart = tic;
+
     fn = file_list(i).name;
     path = file_list(i).folder;
 
-    c = ek_read_Intan_RHS2000_file(fn, path);
+    [~, c] = evalc("ek_read_Intan_RHS2000_file(fn, path)");  % evalc streams command window output into first var
 
     data(i).drug =  file_list(i).drug;
     data(i).current=file_list(i).current;    
@@ -43,9 +48,14 @@ for i = length(file_list):-1:1   % create struct backwards, preallocates for spe
     data(i).breathing=c.board_adc_data(2, :);
 
     clear c;
-end
 
-% end CDR edits
+    elapsed = toc(filestart);
+    disp('Loaded file ' + string(i) + ' (' + elapsed + 's)' );
+end
+elapsed = toc(start);
+disp("Finished loading. Total time: " + elapsed + "s")
+
+% save("/Users/cirorandazzo/ek-spectral-analysis/unproc_data.mat","data")
 
 %% call params saline
 % call amplitude, pitch, duration, latency, insp depth, insp peak time
@@ -87,120 +97,23 @@ end
 % figure
 % nhist(expAmp.saline)
 
-%% == for muscimol 14uA ==
-path = ...
-    '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/muscimol/14uA/400Hz_50ms_14uA_230221_170938/';
-cd(path)
-files = dir('*.rhs');
-
-clear data
-for i = 1 : length(files)
-    fn = files(i).name;
-    ek_read_Intan_RHS2000_file(fn, path);
-    
-    data(i).fs = frequency_parameters.amplifier_sample_rate;
-    data(i).sound = board_adc_data(1, :);
-    data(i).breathing = board_adc_data(2, :);
-    data(i).stim = board_dig_in_data; %stim_data(stimChan, :);
-end
-
-% call params muscimol
-% call amplitude, pitch, duration, latency, insp depth, insp peak time
-latency.muscimol = [];
-expAmp.muscimol = []; pitch.muscimol = []; dur.muscimol = []; inspPeak.muscimol = []; inspPeakT.muscimol = [];
-fs = data(1).fs;
-
-dataMat.breathing.muscimol = [];
-dataMat.audio.muscimol = [];
-
-for i = 1 : length(data)
-    stim = find(data(i).stim > 0.5);
-    stimT = stim(data(i).stim(stim - 1) < 0.5);
-    for j = 1 : length(stimT)
-        if length(data(i).breathing) < stimT(j) + fs || stimT(j) - fs < 1
-            continue
-        end
-
-        dataMat.breathing.muscimol = [dataMat.breathing.muscimol; data(i).breathing(stimT(j) - fs : stimT(j) + fs)];
-        dataMat.audio.muscimol = [dataMat.audio.muscimol; data(i).sound(stimT(j) - fs : stimT(j) + fs)];
-
-        breathing = data(i).breathing(stimT(j) + 50 * fs / 1000 : end) + 0.2;
-        call = find(breathing > 0);
-
-        latency.muscimol = [latency.muscimol call(1) * 1000 / fs + 50];
-        expAmp.muscimol = [expAmp.muscimol max(breathing(call(1) : call(1) + 300 * fs / 1000)) / max(data(i).breathing(stimT(j) - fs : stimT(j)))];
-        
-        [M, I] = min(data(i).breathing(stimT(j) : stimT(j) + 100 * fs / 1000));
-        inspPeak.muscimol = [inspPeak.muscimol M / abs(min(data(i).breathing(stimT(j) - 500 * fs / 1000 : stimT(j))))];
-        inspPeakT.muscimol = [inspPeakT.muscimol I  * 1000 / fs];
-    end
-end
-%% == for gabazine 14uA ==
-path = ...
-    '/Users/eszterkish/Documents/Data/DMstim_airsac/P-I/230221_pk30gr9/gabazine_50uM/14uA/400Hz_50ms_14uA_230221_191950/';
-cd(path)
-files = dir('*.rhs');
-
-clear data
-for i = 1 : length(files)
-    fn = files(i).name;
-    ek_read_Intan_RHS2000_file(fn, path);
-    
-    data(i).fs = frequency_parameters.amplifier_sample_rate;
-    data(i).sound = board_adc_data(1, :);
-    data(i).breathing = board_adc_data(2, :);
-    data(i).stim = board_dig_in_data; %stim_data(stimChan, :);
-end
-
-% call params gabazine
-% call amplitude, pitch, duration, latency, insp depth, insp peak time
-latency.gabazine = [];
-expAmp.gabazine = []; pitch.gabazine = []; dur.gabazine = []; inspPeak.gabazine = []; inspPeakT.gabazine = [];
-fs = data(1).fs;
-
-dataMat.breathing.gabazine = [];
-dataMat.audio.gabazine = [];
-
-for i = 1 : length(data)
-    stim = find(data(i).stim > 0.5);
-    stimT = stim(data(i).stim(stim - 1) < 0.5);
-    for j = 1 : length(stimT)
-        if length(data(i).breathing) < stimT(j) + fs || stimT(j) - fs < 1
-            continue
-        end
-
-        dataMat.breathing.gabazine = [dataMat.breathing.gabazine; data(i).breathing(stimT(j) - fs : stimT(j) + fs)];
-        dataMat.audio.gabazine = [dataMat.audio.gabazine; data(i).sound(stimT(j) - fs : stimT(j) + fs)];
-
-        breathing = data(i).breathing(stimT(j) + 50 * fs / 1000 : end) + 0.2;
-        call = find(breathing > 0);
-
-        latency.gabazine = [latency.gabazine call(1) * 1000 / fs + 50];
-        expAmp.gabazine = [expAmp.gabazine max(breathing(call(1) : call(1) + 300 * fs / 1000)) / max(data(i).breathing(stimT(j) - fs : stimT(j)))];
-        
-        [M, I] = min(data(i).breathing(stimT(j) : stimT(j) + 100 * fs / 1000));
-        inspPeak.gabazine = [inspPeak.gabazine M / abs(min(data(i).breathing(stimT(j) - 500 * fs / 1000 : stimT(j))))];
-        inspPeakT.gabazine = [inspPeakT.gabazine I * 1000 / fs];
-    end
-end
-
 %% == plot stuff across conditions ==
 
-figure; nhist(expAmp, 'samebins', 'binfactor', 2)
+figure; nhist(exp_amp, 'samebins', 'binfactor', 2)
 xlabel('evoked expiration amplitude')
 set(gca, 'tickdir', 'out', 'fontsize', 30)
 
-figure; nhist(inspPeak, 'samebins')
+figure; nhist(insp_peak, 'samebins')
 xlabel('evoked insp amplitude')
 set(gca, 'tickdir', 'out', 'fontsize', 30)
 
-figure; nhist(inspPeakT, 'samebins')
+figure; nhist(insp_peak_t, 'samebins')
 xlabel('evoked insp peak latency (ms)')
 set(gca, 'tickdir', 'out', 'fontsize', 30)
 
 %% plot outliers
 
-ind = find(inspPeakT.gabazine < 40);
+ind = find(insp_peak_t.gabazine < 40);
 
 for i = ind
     figure
@@ -255,10 +168,10 @@ end
 i = 6;
 
 stim = find(data(i).stim > 0.5);
-stimT = stim(data(i).stim(stim - 1) < 0.5);
+stim_t = stim(data(i).stim(stim - 1) < 0.5);
 stim_x = [];
-for j = 1 : length(stimT)
-    stim_x = [stim_x [stimT(j) : stimT(j) + 50 * data(i).fs / 1000 - 1]];
+for j = 1 : length(stim_t)
+    stim_x = [stim_x [stim_t(j) : stim_t(j) + 50 * data(i).fs / 1000 - 1]];
 end
 stim_y = ones(length(stim_x), 1) * 0.8;
 
@@ -279,9 +192,9 @@ fs = data(1).fs;
 
 for i = 1 : length(data)
     stim = find(data(i).stim > 0.5);
-    stimT = stim(data(i).stim(stim - 1) < 0.5);
-    for j = 1 : length(stimT)
-        breathing = data(i).breathing(stimT(j) + 50 * fs / 1000 : end) + 0.2;
+    stim_t = stim(data(i).stim(stim - 1) < 0.5);
+    for j = 1 : length(stim_t)
+        breathing = data(i).breathing(stim_t(j) + 50 * fs / 1000 : end) + 0.2;
         call = find(breathing > 0);
 
 %         latency.muscimol = [latency.muscimol call(1) * 1000 / fs + 50];
@@ -306,13 +219,13 @@ amp10.muscimol = [];
 
 for i = 1 : length(data)
     stim = find(data(i).stim > 0.5);
-    stimT = stim(data(i).stim(stim - 1) < 0.5);
-    for j = 1 : length(stimT)
-        if stimT(j) + 400 * fs / 1000 > length(data(i).breathing) || stimT(j) - 300 * fs / 1000 <= 0
+    stim_t = stim(data(i).stim(stim - 1) < 0.5);
+    for j = 1 : length(stim_t)
+        if stim_t(j) + 400 * fs / 1000 > length(data(i).breathing) || stim_t(j) - 300 * fs / 1000 <= 0
             continue
         end
-        breathing = data(i).breathing(stimT(j) + 50 * fs / 1000 : stimT(j) + 400 * fs / 1000) + 0.2;
-        amp = max(breathing) / max(data(i).breathing(stimT(j) - 300 * fs / 1000 : stimT(j)) + 0.2);
+        breathing = data(i).breathing(stim_t(j) + 50 * fs / 1000 : stim_t(j) + 400 * fs / 1000) + 0.2;
+        amp = max(breathing) / max(data(i).breathing(stim_t(j) - 300 * fs / 1000 : stim_t(j)) + 0.2);
 
 %         amp14.saline = [amp14.saline amp];
 %         amp14.gabazine = [amp14.gabazine amp];
