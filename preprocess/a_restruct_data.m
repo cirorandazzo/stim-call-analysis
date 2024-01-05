@@ -1,4 +1,4 @@
-%% process_data.m
+%% a_restruct_data.m
 % 2023.12.13 CDR
 % 
 % Given "unprocessed data" (data_struct from ek_read_Intan_RHS2000_file), 
