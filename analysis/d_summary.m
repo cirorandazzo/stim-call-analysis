@@ -4,14 +4,13 @@
 % Summary measures/statistics on spectral features
 
 %% TODO: load file
-% just carrying over struct in workspace right now, since i dont want to
-% save it until it's more complete
 
-% clear;
-% close all;
+clear;
+close all;
+close_figs = 0;  % set true to automatically close figures one plotting is complete
 
-% file_path = '/Users/cirorandazzo/ek-spectral-analysis/';
-% load(file_path);
+file_path = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features.mat';
+load(file_path);
 
 %% boxplots for frequency, amplitude, duration
 % in each condition with >=1 trial with exactly 1 call
@@ -24,30 +23,38 @@ columns = 4;
 fig(1) = figure('Name', 'f_max', 'Position', [1 708 1280 629]);
 sp_f = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
 
-fig(2) = figure('Name', 'max_amp', 'Position', [1281 708 1280 629]);
-sp_amp = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
+fig(2) = figure('Name', 'max_amp_filt', 'Position', [1281 708 1280 629]);
+sp_amp_filt = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
 
-fig(3) = figure('Name', 'call duration', 'Position', [1 1 1280 629]);
+fig(3) = figure('Name', 'max_amp_fft', 'Position', [1281 1 1280 629]);
+sp_amp_fft = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
+
+fig(4) = figure('Name', 'call duration', 'Position', [1 1 1280 629]);
 sp_dur = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
+
 
 i=1;
 
-for c = 1:length(call_seg_data)
-    if ~isempty(call_seg_data(c).audio_filt_call)
+for c = 1:length(spectral_features)
+    if ~isempty(spectral_features(c).audio_filt_call)
 
-        duration = call_seg_data(c).spectral_features.duration;
-        f_max = call_seg_data(c).spectral_features.freq_max_amp;
-        amp_max = call_seg_data(c).spectral_features.call_max_freq;
+        duration = spectral_features(c).spectral_features.duration;
+        f_max = spectral_features(c).spectral_features.freq_max_amp;
+        amp_max_filt = spectral_features(c).spectral_features.max_amp_filt;
+        amp_max_fft = spectral_features(c).spectral_features.max_amp_fft;
         
-        drug = call_seg_data(c).drug;
-        current = call_seg_data(c).current;
-        n = string(length(call_seg_data(c).audio_filt_call));
+        drug = spectral_features(c).drug;
+        current = spectral_features(c).current;
+        n = string(length(spectral_features(c).audio_filt_call));
 
         boxplot(sp_f(i), f_max);
         setAxes(sp_f(i), drug, current, n, [0 8500], 'Frequency (Hz)');
 
-        boxplot(sp_amp(i), amp_max);
-        setAxes(sp_amp(i), drug, current, n, [0 3], ['Amplitude']);
+        boxplot(sp_amp_filt(i), amp_max_filt);
+        setAxes(sp_amp_filt(i), drug, current, n, [0 0.05], 'Amplitude_Filt');
+        
+        boxplot(sp_amp_fft(i), amp_max_fft);
+        setAxes(sp_amp_fft(i), drug, current, n, [0 3], 'Amplitude_FFT');
         
         boxplot(sp_dur(i), duration);
         setAxes(sp_dur(i), drug, current, n, [30 120], 'duration (ms)');
@@ -57,10 +64,13 @@ for c = 1:length(call_seg_data)
 end
 
 %% save boxplots
-save_path = "/Users/cirorandazzo/ek-spectral-analysis/figures/";
+save_path = "/Users/cirorandazzo/ek-spectral-analysis/";
 
 savefig(fig, save_path+'boxplots.fig', 'compact');
 
+if close_figs
+    close all;
+end
 
 %% 
 

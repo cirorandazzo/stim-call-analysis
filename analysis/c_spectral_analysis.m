@@ -12,6 +12,7 @@ close all;
 %% load file
 
 file_path = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data.mat';
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features.mat';
 
 load(file_path);
 
@@ -30,6 +31,8 @@ for c = length(call_seg_data):-1:1
         % call duration in ms
         call_seg_data(c).spectral_features.duration = cellfun(@(tr) length(tr)*1000/fs, audio_calls);
 
+        call_seg_data(c).spectral_features.max_amp_filt = cellfun(@(x) max(abs(x)), audio_calls);
+
         % frequency of maximum amplitude
         [f_max, amp_max] = fma(audio_calls, fs);
         call_seg_data(c).spectral_features.freq_max_amp = f_max;
@@ -39,6 +42,10 @@ for c = length(call_seg_data):-1:1
     end
 end
 
-%%
+% rename struct
+spectral_features = call_seg_data;
+clear call_seg_data
 
-% TODO: figure out f0 in get_f0.mlx
+%% SAVE
+
+save(save_file, 'spectral_features')
