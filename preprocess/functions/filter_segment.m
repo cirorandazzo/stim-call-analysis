@@ -1,4 +1,4 @@
-function [filtsongs, noise_thresholds, onsets, offsets] = filter_segment(unfilt, fs, f_low, f_high, min_int, min_dur, q)
+function [filtsongs, noise_thresholds, onsets, offsets] = filter_segment(unfilt, fs, f_low, f_high, min_int, min_dur, q, stim_i)
 % filter_segment.m
 % 2023.01.05 CDR
 % 
@@ -30,7 +30,8 @@ offsets = cell(d);
 %% filter every trial in this condition & get noise thresholds
 for i=1:size(unfilt,1)  
     filtsongs{i}=pj_bandpass(unfilt(i,:), fs, f_low, f_high, 'butterworth');
-    noise_thresholds(i) = q * median(abs(filtsongs{i}));
+    noise_thresholds(i) = q * median(abs(filtsongs{i}(1:stim_i)));  % use data from before stim; changed from entire trial. 20230108CDR
+    % noise_thresholds(i) = q * median(abs(filtsongs{i}));  % entire thing
 end
 filtsongs = cell2mat(filtsongs);
 

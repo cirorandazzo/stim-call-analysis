@@ -32,7 +32,7 @@ spec_threshold = .05; % determined manually; see spectrogram_thresholding.m
 %--noise thresholding options
 show_onsets = 1;
 
-q = 5.5;  % threshold = q*MEDIAN
+q = 5.6;  % threshold = q*MEDIAN
 
 % NOTE: below values are in ms
 min_int = 10;  % minimum time between 2 notes to be considered separate notes (else merged)
@@ -49,7 +49,7 @@ for c=length(proc_data):-1:1  % for each condition
         proc_data(c).noise_thresholds, ...
         onsets, ...
         offsets ...
-        ] = filter_segment(a, fs, f_low, f_high, min_int, min_dur, q);
+        ] = filter_segment(a, fs, f_low, f_high, min_int, min_dur, q, stim_i);
 
     proc_data(c).audio_filt = audio_filt;
     proc_data(c).onsets = onsets;
@@ -91,8 +91,8 @@ condition = 2;  % index in proc_data
 
 if to_plot
     %--MANUALLY SELECT SUBSET
-    asdf=41:60;
-    select_trials = call_seg_data(condition).no_calls(asdf);
+    trials_to_plot=41:60;
+    select_trials = call_seg_data(condition).no_calls(trials_to_plot);
     
     %--AUTOMATICALLY SELECT SUBSET (eg, trials with no calls)
     % select_trials = proc_data(condition).no_calls;
