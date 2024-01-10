@@ -1,16 +1,19 @@
 %% a_restruct_data.m
 % 2023.12.13 CDR
 % 
+% TODO: rename
 % Given "unprocessed data" (data_struct from ek_read_Intan_RHS2000_file), 
 
 clear
 
 %% load data
 
-unproc_data = '/Users/cirorandazzo/ek-spectral-analysis/unproc_data.mat';
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/proc_data.mat';
+unproc_data = '/Users/cirorandazzo/ek-spectral-analysis/unproc_data-bk68wh15.mat';
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/proc_data-bk68wh15.mat';
 
 load(unproc_data)
+
+labels = {"current", "frequency", "length"};
 
 %% set process options & create filter
 
@@ -26,68 +29,52 @@ Fstop = 450;
 fs = 30000; 
 
 % Design method defaults to 'equiripple' when omitted
+
+tic;
+
 deq = designfilt('lowpassfir','FilterOrder',N,'PassbandFrequency',Fpass,...
   'StopbandFrequency',Fstop,'SampleRate',fs);
 
 
 %% index data for individual condition
+% parameters: unique values for each label in labels
+% conditions: all unique combinations of parameters (even unused ones;
+%   empty conditions will be deleted soon)
 
-% get all conditions. or, specify these manually
-drugs = unique({data.drug});
-currents = unique({data.current});
+parameters = cellfun(@(x) {unique({unproc_data.(x)})}, labels);
 
-conditions = length(drugs)*length(currents);
+n_conditions = prod(cellfun(@(x) size(x,1), parameters));
 
-pr = cell(1,conditions);
-proc_data = struct(...
-    'drug', pr, ...
-    'current', pr, ...
-    'breathing', pr, ...
-    'audio', pr, ...
-    'latencies', pr, ...
-    'exp_amps', pr, ...
-    'insp_amps', pr, ...
-    'insp_amps_t', pr ...
-    );  % preallocate struct array length
+conditions = getUniqueConditionCombos(parameters);
 
 %%
-n_currents = length(currents);
+for cond=size(conditions,1):-1:1
+    data_i = ones([1 length(unproc_data)]);
 
-for i = 1:length(drugs)
-    d = drugs{i};
-    i_drug = strcmp({data.drug}, d);
+    for i=1:length(labels) % assign condition info to this struct
+        param_name = labels{i};
+        val = conditions(cond,i);
 
-    for j = 1:n_currents
-        c = currents{j};
-        i_curr = strcmp({data.current}, c);
-        
-        data_cut = data(i_drug & i_curr);
-        
-        k = n_currents*(i-1)+j;  % row of proc_data (flattened index for i/j)
+        proc_data(cond).(param_name) = val;  % set parameters in new struct
+        data_i = data_i & strcmp({unproc_data.(param_name)}, val);  % make conditional index of unproc_data
+    end
 
-        % process & flatten
-        if ~isempty(data_cut)
+    if any(data_i)
+            data_cut = unproc_data(data_i);
+
             proc_struct = arrayfun(@(x) getCallParamWrapper(x, deq, radius, insp_dur_max, ...
             exp_delay, exp_dur_max), data_cut);
 
-            a.drug = d;
-            a.current = c;
-            a.breathing=cell2mat({proc_struct.breathing}');
-            a.audio=cell2mat({proc_struct.audio}');
-            a.latencies=cell2mat({proc_struct.latencies}');
-            a.exp_amps=cell2mat({proc_struct.exp_amps}');
-            a.insp_amps=cell2mat({proc_struct.insp_amps}');
-            a.insp_amps_t=cell2mat({proc_struct.insp_amps_t}');
-    
-            proc_data(k)=a;
-        else
-            proc_data(k).drug = d;
-            proc_data(k).current = c;
-        end
-        % save to struct
-        
-        clear a;
+            proc_data(cond).breathing=cell2mat({proc_struct.breathing}');
+            proc_data(cond).audio=cell2mat({proc_struct.audio}');
+            proc_data(cond).latencies=cell2mat({proc_struct.latencies}');
+            proc_data(cond).exp_amps=cell2mat({proc_struct.exp_amps}');
+            proc_data(cond).insp_amps=cell2mat({proc_struct.insp_amps}');
+            proc_data(cond).insp_amps_t=cell2mat({proc_struct.insp_amps_t}');
     end
+        
+    clear a;
+
 end
 
 %% remove empty rows
@@ -95,5 +82,6 @@ end
 empty_cond = cellfun(@(x) isempty(x), {proc_data.breathing});
 proc_data = proc_data(~empty_cond);
 
+toc; 
 %% save
 save(save_file, 'proc_data')

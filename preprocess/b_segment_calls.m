@@ -9,8 +9,8 @@ clc
 
 %% load processed data
 
-file_path = "/Users/cirorandazzo/ek-spectral-analysis/proc_data.mat";
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data.mat';
+file_path = "/Users/cirorandazzo/ek-spectral-analysis/proc_data-bk68wh15.mat";
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data-bk68wh15.mat';
 
 load(file_path);
 
@@ -32,15 +32,17 @@ spec_threshold = .05; % determined manually; see spectrogram_thresholding.m
 %--noise thresholding options
 show_onsets = 1;
 
-q = 5.6;  % threshold = q*MEDIAN
+q = 5.7;  % threshold = q*MEDIAN
 
 % NOTE: below values are in ms
 min_int = 10;  % minimum time between 2 notes to be considered separate notes (else merged)
-min_dur = 30;  % minimum duration of note to be considered (else ignored)
+min_dur = 20;  % minimum duration of note to be considered (else ignored)
 
 stim_i = 30001;  % stimulation onset frame index
 
 %% get onsets/offsets for every trial
+
+tic;
 
 for c=length(proc_data):-1:1  % for each condition
     a = proc_data(c).audio;
@@ -75,6 +77,8 @@ end
 call_seg_data = proc_data;
 clear proc_data
 
+
+toc;
 %% SAVE
 
 save(save_file, 'call_seg_data')
@@ -83,24 +87,24 @@ save(save_file, 'call_seg_data')
 % eg, only trials with no calls detected
 % close all;
 
-to_plot = 0;
+to_plot = 1;
 cols = 5;
-max_to_plot = 20;
+max_to_plot = 10;
 
-condition = 2;  % index in proc_data
+condition = 1;  % index in proc_data
 
 if to_plot
+    tic;
     %--MANUALLY SELECT SUBSET
-    trials_to_plot=41:60;
-    select_trials = call_seg_data(condition).no_calls(trials_to_plot);
+    % select_trials = call_seg_data(condition).no_calls(1:10);
+    select_trials = 41:45;
     
     %--AUTOMATICALLY SELECT SUBSET (eg, trials with no calls)
-    % select_trials = proc_data(condition).no_calls;
+    % select_trials = call_seg_data(condition).no_calls;
     % % select_trials = proc_data(condition).multi_calls;
-    % 
     % if length(select_trials) > max_to_plot  % take subset of trials if there are too many
-    %     select_trials = select_trials(1:max_to_plot);  % from start
-    %     % select_trials = select_trials(randi(length(select_trials), max_to_plot));  % random subset 
+    %     % select_trials = select_trials(1:max_to_plot);  % from start
+    %     select_trials = select_trials(randi(length(select_trials), max_to_plot));  % random subset 
     % end
 
 
@@ -126,8 +130,10 @@ if to_plot
         ms_on = onsets{orig_i} * 1000 / fs;
     
         plot_spectr_callLines(filtsong, ms_on, ms_off, fs, spec_threshold, n , overlap, f_low, f_high);
-    
+        xlim([stim_i-10000 stim_i+10000]*1000 / fs);
+
         title(select_trials(i));
         hold off;
     end
+    toc;
 end

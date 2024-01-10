@@ -9,7 +9,7 @@ clear;
 close all;
 close_figs = 0;  % set true to automatically close figures one plotting is complete
 
-file_path = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features.mat';
+file_path = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features-bk68wh15.mat';
 load(file_path);
 
 %% boxplots for frequency, amplitude, duration
@@ -17,8 +17,10 @@ load(file_path);
 
 close all;
 
-rows = 2;  % TODO: count # of non-empty conditions before plotting & pick rows/cols
-columns = 4;
+rows = 1;
+columns = 1;
+% rows = 2;  % TODO: count # of non-empty conditions before plotting & pick rows/cols
+% columns = 4;
 
 fig(1) = figure('Name', 'f_max', 'Position', [1 708 1280 629]);
 sp_f = arrayfun(@(i) subplot(rows,columns,i), 1:rows*columns);
@@ -43,21 +45,25 @@ for c = 1:length(spectral_features)
         amp_max_filt = spectral_features(c).spectral_features.max_amp_filt;
         amp_max_fft = spectral_features(c).spectral_features.max_amp_fft;
         
-        drug = spectral_features(c).drug;
-        current = spectral_features(c).current;
+        % drug = spectral_features(c).drug;
+        % current = spectral_features(c).current;
         n = string(length(spectral_features(c).audio_filt_call));
 
         boxplot(sp_f(i), f_max);
-        setAxes(sp_f(i), drug, current, n, [0 8500], 'Frequency (Hz)');
+        setAxes(sp_f(i), n, 'auto', 'Frequency (Hz)');
+        % setAxes(sp_f(i), drug, current, n, [0 8500], 'Frequency (Hz)');
 
         boxplot(sp_amp_filt(i), amp_max_filt);
-        setAxes(sp_amp_filt(i), drug, current, n, [0 0.05], 'Amplitude_Filt');
+        setAxes(sp_amp_filt(i), n, 'auto', 'Amplitude_Filt');
+        % setAxes(sp_amp_filt(i), drug, current, n, [0 0.05], 'Amplitude_Filt');
         
         boxplot(sp_amp_fft(i), amp_max_fft);
-        setAxes(sp_amp_fft(i), drug, current, n, [0 3], 'Amplitude_FFT');
+        setAxes(sp_amp_fft(i), n, 'auto', 'Amplitude_FFT');
+        % setAxes(sp_amp_fft(i), drug, current, n, [0 3], 'Amplitude_FFT');
         
         boxplot(sp_dur(i), duration);
-        setAxes(sp_dur(i), drug, current, n, [30 120], 'duration (ms)');
+        setAxes(sp_dur(i), n, 'auto', 'duration (ms)');
+        % setAxes(sp_dur(i), drug, current, n, [30 120], 'duration (ms)');
 
         i = i+1;
     end
@@ -74,16 +80,28 @@ end
 
 %% 
 
-function setAxes(ax, drug, current, n, YLim, YLabel)
-    ax.Title.String = [drug(1:end) ' ' current];
+function setAxes(ax, n, YLim, YLabel)
     ax.Title.Interpreter = 'none';
     ax.Title.Clipping = 'on';
 
     ax.XLabel.String = "n=" + n;
     ax.XTick = [];
 
-    ax.YLim = YLim;
+    ylim(ax, YLim);
     ax.YLabel.String = YLabel;
 
     ax.YGrid = 'on';
 end
+% function setAxes(ax, drug, current, n, YLim, YLabel)
+%     ax.Title.String = [drug(1:end) ' ' current];
+%     ax.Title.Interpreter = 'none';
+%     ax.Title.Clipping = 'on';
+% 
+%     ax.XLabel.String = "n=" + n;
+%     ax.XTick = [];
+% 
+%     ax.YLim = YLim;
+%     ax.YLabel.String = YLabel;
+% 
+%     ax.YGrid = 'on';
+% end

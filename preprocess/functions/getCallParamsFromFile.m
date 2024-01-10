@@ -1,4 +1,4 @@
-function [breathing, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
+function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
     = getCallParamsFromFile(data_stim, data_breathing, data_sound, deq, fs, radius, insp_dur_max, exp_delay, exp_dur_max)
 % getCallParamsFromFile.m
 % 2023.12.05 CDR
@@ -16,9 +16,13 @@ function [breathing, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
 
     
     % == get stim onsets (frame in data_stim) ==
-    stim = find(data_stim == 1);  % stim is occuring
+    stim = find(data_stim == 1);  % indices where stim is occuring
+
+    stim(stim==1) = [];  % ignore stim at very start of data. breaks next statement
+    % TODO: do nicer error checking
+
     stim_t = stim(data_stim(stim - 1) ~=1 );  % stim does not occur prev trial
-    
+
     r_fr = radius * fs;  % num of frames to take before/after stim
     l_window = 2*r_fr+1;
 
@@ -27,6 +31,7 @@ function [breathing, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
     % == preallocate for speed ==
     z = zeros([length(stim_t) l_window]);  % vector length l_window per trial
     breathing = z;
+    breathing_filt = z;
     audio = z;
 
     z = zeros([length(stim_t) 1]);  % 1 value per trial
@@ -54,7 +59,7 @@ function [breathing, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
         f = filtfilt(deq, data_breathing(s:e));
         
         breathing(j,:) = data_breathing(s:e);
-        % breathing(j,:) = f;  % TODO: switch back to filtered data
+        breathing_filt(j,:) = f;  
         audio(j,:) = data_sound(s:e);
 
         stim_i = r_fr + 1;  % frame index of stim in cut data

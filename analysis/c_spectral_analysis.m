@@ -11,8 +11,8 @@ close all;
 
 %% load file
 
-file_path = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data.mat';
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features.mat';
+file_path = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data-bk68wh15.mat';
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/spectral_features-bk68wh15.mat';
 
 load(file_path);
 
@@ -24,9 +24,12 @@ stim_i = 30001;
 %%
 
 for c = length(call_seg_data):-1:1
+    % call_seg_data(c).stimBreathPhase = getBreathPhaseStim(call_seg_data(c).breathing, stim_i);
+    % TODO: stimBreathPhase
+
     if ~isempty(call_seg_data(c).audio_filt_call)
 
-        audio_calls = call_seg_data(c).audio_filt_call;
+        audio_calls = call_seg_data(c).audio_filt_call;spectral_features.audio_filt_call
 
         % call duration in ms
         call_seg_data(c).spectral_features.duration = cellfun(@(tr) length(tr)*1000/fs, audio_calls);
@@ -37,8 +40,6 @@ for c = length(call_seg_data):-1:1
         [f_max, amp_max] = fma(audio_calls, fs);
         call_seg_data(c).spectral_features.freq_max_amp = f_max;
         call_seg_data(c).spectral_features.max_amp_fft = amp_max;
-        
-
     end
 end
 
