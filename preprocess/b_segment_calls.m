@@ -9,8 +9,8 @@ clc
 
 %% load processed data
 
-file_path = "/Users/cirorandazzo/ek-spectral-analysis/proc_data-bk68wh15.mat";
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data-bk68wh15.mat';
+file_path = '/Users/cirorandazzo/ek-spectral-analysis/proc_data-pk70pu50.mat';
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/call_seg_data-pk70pu50.mat';
 
 load(file_path);
 
@@ -26,19 +26,21 @@ sigma = 3;
 f_low = 500;
 f_high = 10000;
 
-spec_threshold = .05; % determined manually; see spectrogram_thresholding.m
+spec_threshold = .04; % determined manually; see spectrogram_thresholding.m
 
 
 %--noise thresholding options
 show_onsets = 1;
 
-q = 5.7;  % threshold = q*MEDIAN
+q = 5;  % threshold = q*MEDIAN
 
 % NOTE: below values are in ms
 min_int = 10;  % minimum time between 2 notes to be considered separate notes (else merged)
-min_dur = 20;  % minimum duration of note to be considered (else ignored)
+min_dur = 15;  % minimum duration of note to be considered (else ignored)
 
 stim_i = 30001;  % stimulation onset frame index
+
+post_stim_to_check = ([15 150] * fs/1000)+stim_i;  % only check for call trial within this window after stim onset
 
 %% get onsets/offsets for every trial
 
@@ -52,6 +54,21 @@ for c=length(proc_data):-1:1  % for each condition
         onsets, ...
         offsets ...
         ] = filter_segment(a, fs, f_low, f_high, min_int, min_dur, q, stim_i);
+
+    % only take calls within desired window
+    
+    % check onsets/onsets individually
+    i_on = cellfun(@(x) x >=post_stim_to_check(1) & x<=post_stim_to_check(2), onsets, 'UniformOutput',false);
+    i_off = cellfun(@(x) x >=post_stim_to_check(1) & x<=post_stim_to_check(2), offsets, 'UniformOutput',false);
+
+    % ensure both onset/offset are within that window
+    i_good = arrayfun(@(i) {i_on{i} & i_off{i}}, 1:size(i_on,1));
+
+    % delete remainder
+    onsets_old = onsets;
+    offsets_old = offsets;
+    onsets = arrayfun(@(i)  onsets{i}(i_good{i}), 1:size(i_on,1), 'UniformOutput',false)';
+    offsets = arrayfun(@(i) offsets{i}(i_good{i}), 1:size(i_on,1), 'UniformOutput',false)';
 
     proc_data(c).audio_filt = audio_filt;
     proc_data(c).onsets = onsets;
@@ -97,15 +114,15 @@ if to_plot
     tic;
     %--MANUALLY SELECT SUBSET
     % select_trials = call_seg_data(condition).no_calls(1:10);
-    select_trials = 41:45;
+    % select_trials = 1:10;
     
     %--AUTOMATICALLY SELECT SUBSET (eg, trials with no calls)
-    % select_trials = call_seg_data(condition).no_calls;
-    % % select_trials = proc_data(condition).multi_calls;
-    % if length(select_trials) > max_to_plot  % take subset of trials if there are too many
-    %     % select_trials = select_trials(1:max_to_plot);  % from start
-    %     select_trials = select_trials(randi(length(select_trials), max_to_plot));  % random subset 
-    % end
+    select_trials = call_seg_data(condition).one_call;
+    % select_trials = call_seg_data(condition).multi_calls;
+    if length(select_trials) > max_to_plot  % take subset of trials if there are too many
+        % select_trials = select_trials(1:max_to_plot);  % from start
+        select_trials = select_trials(randi(length(select_trials), max_to_plot));  % random subset 
+    end
 
 
     a = call_seg_data(condition).audio(select_trials, :);
@@ -113,7 +130,7 @@ if to_plot
     offsets = call_seg_data(condition).offsets;
 
     f = figure();
-    f.WindowState = 'maximized';
+    % f.WindowState = 'maximized';
     % set(f,'Position',[-1079 -295 1080 869]);
     
     rows = ceil(length(select_trials)/cols);

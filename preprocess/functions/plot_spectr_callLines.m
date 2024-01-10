@@ -8,8 +8,8 @@ S = ek_spectrogram(filtsong, fs, spec_threshold, n, overlap, f_low, f_high);
 
 
 colors = autumn(length(offsets));
-y_min = f_low;
-y_max = f_high;
+y_min = 0;
+y_max = 15e3;
 
 for j=1:length(offsets)
     onset = onsets(j);
@@ -19,8 +19,10 @@ for j=1:length(offsets)
 
     plot([onset onset], [y_min y_max], 'Color', color, 'LineWidth', w);
     plot([offset offset], [y_min y_max], 'Color', color, 'LineWidth', w);
+    
 end
 
+ylim([.5 1.5]*10e3 );
 fig = gcf;
 
 end

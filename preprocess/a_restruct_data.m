@@ -8,8 +8,8 @@ clear
 
 %% load data
 
-unproc_data = '/Users/cirorandazzo/ek-spectral-analysis/unproc_data-bk68wh15.mat';
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/proc_data-bk68wh15.mat';
+unproc_data = "/Users/cirorandazzo/ek-spectral-analysis/unproc_data-pk70pu50.mat";
+save_file = '/Users/cirorandazzo/ek-spectral-analysis/proc_data-pk70pu50.mat';
 
 load(unproc_data)
 

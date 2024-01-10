@@ -9,7 +9,9 @@
 clear
 
 %%
-data_root = "/Users/cirorandazzo/ek-spectral-analysis/PAm stim/052222_bk68wh15"; 
+data_root = "/Users/cirorandazzo/ek-spectral-analysis/data/PAm stim/060722_pk70pu50"; 
+save_file = "/Users/cirorandazzo/ek-spectral-analysis/unproc_data-pk70pu50.mat";
+
 
 file_list = dir(fullfile(data_root, ['**' filesep '*.rhs']));  % get all intan rhs files
 
@@ -37,4 +39,4 @@ toc
 
 %%
 
-save("/Users/cirorandazzo/ek-spectral-analysis/unproc_data-bk68wh15.mat", "unproc_data");
+save(save_file, "unproc_data");
