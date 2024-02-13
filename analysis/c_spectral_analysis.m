@@ -29,17 +29,20 @@ for c = length(call_seg_data):-1:1
 
     if ~isempty(call_seg_data(c).audio_filt_call)
 
-        audio_calls = call_seg_data(c).audio_filt_call;spectral_features.audio_filt_call
+        audio_calls = call_seg_data(c).audio_filt_call;
 
         % call duration in ms
         call_seg_data(c).spectral_features.duration = cellfun(@(tr) length(tr)*1000/fs, audio_calls);
 
-        call_seg_data(c).spectral_features.max_amp_filt = cellfun(@(x) max(abs(x)), audio_calls);
+        call_seg_data(c).spectral_features.max_amp_filt = cellfun(@(tr) max(abs(tr)), audio_calls);
 
         % frequency of maximum amplitude
         [f_max, amp_max] = fma(audio_calls, fs);
         call_seg_data(c).spectral_features.freq_max_amp = f_max;
         call_seg_data(c).spectral_features.max_amp_fft = amp_max;
+
+        % spectral entropy:
+        call_seg_data(c).spectral_features.spectral_entropy = cellfun(@(tr) pentropy(tr,fs,Instantaneous=false), audio_calls);
     end
 end
 

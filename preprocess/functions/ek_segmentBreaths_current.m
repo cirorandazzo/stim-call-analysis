@@ -1,6 +1,7 @@
 function [insp, exp] = ek_segmentBreaths_current(air, inspThresh, expThresh, durThresh)
 % 16 17 25
 % air = dataMat_sorted(11, :);
+% onsets of insp and exp for a whole breath signal (multiple breaths)
 
 % ==== SEGMENT BREATHS INTO INSPIRATIONS AND EXPIRATIONS HERE ====
 zci = @(v) find(v(:).*circshift(v(:), [-1 0]) <= 0); % zero crossings
@@ -81,9 +82,11 @@ for i = 1 : length(exp_) % test insp & exp with dur & amplitude thresholds
     end
 end
 
-% figure; plot(air); hold on; scatter(insp, zeros(length(insp), 1), 'b')
-% scatter(exp, zeros(length(exp), 1), 'r')
+figure; plot(air); hold on; scatter(insp, zeros(length(insp), 1), 'b')
+scatter(exp, zeros(length(exp), 1), 'r')
 
+
+disp('end')
 
 %%
 % preStimExp = find(exp < 1500 * 30000 / 1000);

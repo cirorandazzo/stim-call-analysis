@@ -19,7 +19,7 @@ function data = readIntanWrapper(x, labels, varargin)
     name = x.name;
     folder = x.folder;
 
-    if ~isempty(varargin) && strcmp(varargin{1}, "SuppressOutput")
+    if ~isempty(varargin) && isa(varargin{1}, "string") && strcmp(varargin{1}, "SuppressOutput")
         [~, c] = evalc("ek_read_Intan_RHS2000_file(name, folder)"); % evalc streams command window output into first var
     else
         c = ek_read_Intan_RHS2000_file(name, folder);

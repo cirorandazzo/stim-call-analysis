@@ -1,40 +1,10 @@
-%% a_restruct_data.m
-% 2023.12.13 CDR
+function [proc_data] = s2_restructure(unproc_data, save_path, filter, ...
+    labels, radius, insp_dur_max, exp_delay, exp_dur_max)
+% S2_RESTRUCTURE
+% 2024.02.12 CDR from script a_restruct_data
 % 
-% TODO: rename
-% Given "unprocessed data" (data_struct from ek_read_Intan_RHS2000_file), 
-
-clear
-
-%% load data
-
-unproc_data = "/Users/cirorandazzo/ek-spectral-analysis/unproc_data-pk70pu50.mat";
-save_file = '/Users/cirorandazzo/ek-spectral-analysis/proc_data-pk70pu50.mat';
-
-load(unproc_data)
-
-labels = {"current", "frequency", "length"};
-
-%% set process options & create filter
-
-radius = 1;
-insp_dur_max = 100;
-exp_delay = 50;
-exp_dur_max = 300;
-
-% Design filter
-N = 30;
-Fpass = 400;
-Fstop = 450;
-fs = 30000; 
-
-% Design method defaults to 'equiripple' when omitted
-
-tic;
-
-deq_br = designfilt('lowpassfir','FilterOrder',N,'PassbandFrequency',Fpass,...
-  'StopbandFrequency',Fstop,'SampleRate',fs);
-
+% Given unprocessed data loaded from Intan (see s1_load_raw), restructure
+% the data into a struct
 
 %% index data for individual condition
 % parameters: unique values for each label in labels
@@ -43,9 +13,8 @@ deq_br = designfilt('lowpassfir','FilterOrder',N,'PassbandFrequency',Fpass,...
 
 parameters = cellfun(@(x) {unique({unproc_data.(x)})}, labels);
 
-n_conditions = prod(cellfun(@(x) size(x,1), parameters));
-
 conditions = getUniqueConditionCombos(parameters);
+
 
 %%
 for cond=size(conditions,1):-1:1
@@ -62,7 +31,7 @@ for cond=size(conditions,1):-1:1
     if any(data_i)
             data_cut = unproc_data(data_i);
 
-            proc_struct = arrayfun(@(x) getCallParamWrapper(x, deq_br, radius, insp_dur_max, ...
+            proc_struct = arrayfun(@(x) getCallParamWrapper(x, filter, radius, insp_dur_max, ...
             exp_delay, exp_dur_max), data_cut);
 
             proc_data(cond).breathing=cell2mat({proc_struct.breathing}');
@@ -82,6 +51,9 @@ end
 empty_cond = cellfun(@(x) isempty(x), {proc_data.breathing});
 proc_data = proc_data(~empty_cond);
 
-toc; 
 %% save
-save(save_file, 'proc_data')
+save(save_path, 'proc_data')
+
+
+end
+

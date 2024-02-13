@@ -1,5 +1,5 @@
 function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
-    = getCallParamsFromFile(data_stim, data_breathing, data_sound, deq, fs, radius, insp_dur_max, exp_delay, exp_dur_max)
+    = getCallParamsFromFile(data_stim, data_breathing, data_sound, deq_breath, fs, radius, insp_dur_max, exp_delay, exp_dur_max)
 % getCallParamsFromFile.m
 % 2023.12.05 CDR
 % 
@@ -56,7 +56,7 @@ function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp
             disp('here')
         end
 
-        f = filtfilt(deq, data_breathing(s:e));
+        f = filtfilt(deq_breath, data_breathing(s:e));
         
         breathing(j,:) = data_breathing(s:e);
         breathing_filt(j,:) = f;  

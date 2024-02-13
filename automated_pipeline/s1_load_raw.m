@@ -1,19 +1,13 @@
-%% a1_load_raw_files.m
-% 2024.01.09 CDR
+function [unproc_data] = s1_load_raw(data_dir,save_path)
+% S1_LOAD_RAW
+% 2024.02.12 CDR from script a1_load_raw_files
 % 
 % Load all Intan RHS files from a directory
 % 
 % NOTE: this does not take file stucture into account when making struct;
 % see loadFileList.m.
 
-clear
-
-%%
-data_root = "/Users/cirorandazzo/ek-spectral-analysis/data/PAm stim/060722_pk70pu50"; 
-save_file = "/Users/cirorandazzo/ek-spectral-analysis/unproc_data-pk70pu50.mat";
-
-
-file_list = dir(fullfile(data_root, ['**' filesep '*.rhs']));  % get all intan rhs files
+file_list = dir(fullfile(data_dir, ['**' filesep '*.rhs']));  % get all intan rhs files
 
 %% get parameters from file name
 params = split({file_list(:).name}, "_");
@@ -33,10 +27,11 @@ end
 
 %%
 
-tic
 unproc_data = arrayfun(@(x) readIntanWrapper(x, labels, "SuppressOutput"), file_list);
-toc
 
 %%
 
-save(save_file, "unproc_data.mat");
+save(save_path, "unproc_data");
+
+end
+

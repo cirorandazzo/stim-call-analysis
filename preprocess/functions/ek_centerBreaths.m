@@ -3,6 +3,8 @@
 % for mean three breaths preceding call onset
 
 function [air2] = ek_centerBreaths(air, exp1, exp2)
+% 
+% exp1/exp2: onsets of 2 previous expirations (without stim/call)
 
 
 % z = (max(air(pb - 500 * fs / 1000 : pb)) + min(dataPre(i).air(pb - 500 * fs / 1000 : pb))) / 2;
