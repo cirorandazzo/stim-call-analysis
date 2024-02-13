@@ -3,7 +3,8 @@ function proc_struct = getCallParamWrapper(data_struct, deq_br, radius, ...
 % getCallParamWrapper.m
 % 2023.12.13 CDR
 % 
-% Given a single row of struct, process & return as another struct.
+% Given a single row of struct with 1 x frames breathing, audio, stim data,
+% process & return as another struct.
 % 
 % PARAMETERS:
 %   See getCallParamsFromFile.m for full parameter descriptions.

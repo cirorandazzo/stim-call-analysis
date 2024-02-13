@@ -5,16 +5,59 @@
 
 clear;
 
-%%
+%% PARAMETERS
+% all processing parameters saved in one big struct for ease of
+% saving/loading parameters
+
 verbose = 1;
 
-raw_data_dir = '/Users/cirorandazzo/ek-spectral-analysis/data/PAm stim/052222_bk68wh15';
-save_folder = '/Users/cirorandazzo/ek-spectral-analysis/data/pipeline';
-bird_name = 'bk68wh15';
+%--files
+p.files.raw_data = '/Users/cirorandazzo/ek-spectral-analysis/dm stim/DMStim_bu69bu75.mat';
+mat_file = true;
 
-save_prefix = [save_folder  '/'  bird_name ];
+p.files.save_folder = '/Users/cirorandazzo/ek-spectral-analysis/data/pipeline/testing';
+% p.files.save_folder = '/Users/cirorandazzo/ek-spectral-analysis/data/pipeline';
+p.files.bird_name = 'bk68wh15';
 
-fs = 30000;
+p.files.labels = {"current", "frequency", "length"};
+% p.files.labels = {};
+
+save_prefix = [p.files.save_folder  '/'  p.files.bird_name ];
+
+p.fs = 30000;
+
+
+%--breathing filter parameters
+p.filt_breath.type = 'lowpassfir';
+p.filt_breath.FilterOrder = 30;
+p.filt_breath.PassbandFrequency = 400;
+p.filt_breath.StopbandFrequency = 450;
+
+
+%--windowing
+p.window.radius = 1;  % for each window, time before and after stim (seconds). usually 1s, for total window length of 2s 
+p.window.stim_i = 30001;  % stimulation onset frame index
+
+p.breath_time.post_stim_call_window = ([15 150] * p.fs/1000)+p.window.stim_i;  % only check for call trial within this window after stim onset
+
+
+%--post-stim breathing windows
+p.breath_time.insp_dur_max = 100;  % how long after stimulation to check for inspiration (milliseconds). usually 100ms
+p.breath_time.exp_delay = 50;  % how long to wait after stimulation before checking for expiration (milliseconds). usually 50ms
+p.breath_time.exp_dur_max = 300;  % window after call onset in which to check expiratory amplitude. usually 300ms
+
+%--filtering/smoothing options
+p.filt_smooth.f_low = 500;
+p.filt_smooth.f_high = 10000;
+p.filt_smooth.sm_window = 2.0; % ms
+p.filt_smooth.filt_type = 'butterworth';
+
+%--noise thresholding options
+p.call_seg.q = 5;  % threshold = p.call_seg.q*MEDIAN
+
+p.call_seg.min_int = 10;  % ms; minimum time between 2 notes to be considered separate notes (else merged)
+p.call_seg.min_dur = 15;  % ms; minimum duration of note to be considered (else ignored)
+
 
 %% STEP 1: load intan data
 
@@ -23,61 +66,41 @@ if verbose
     tic
 end
 
-unproc_data = s1_load_raw(raw_data_dir, [save_prefix '_unproc_data.mat']);
+if mat_file
+    load(p.files.raw_data, 'dataMat');
 
+    % rename for consistency
+    unproc_data = dataMat;
+    clear dataMat;
 
-if verbose 
-    toc
-    disp(['Loaded! Saved to: ' save_prefix '_unproc_data.mat' newline]);
+    unproc_data = renameStructField(unproc_data, 'audio', 'sound');
+    unproc_data.fs = p.fs;
+
+    if verbose 
+        toc
+        disp('Loaded!');
+    end
+
+else  % directory of intan files
+    unproc_data = s1_load_raw(p.files.raw_data, [save_prefix '_unproc_data.mat']);
+
+    if verbose 
+        toc
+        disp(['Loaded! Saved to: ' save_prefix '_unproc_data.mat' newline]);
+    end
+
 end
 
 %% create breathing filter
 
 deq_br = designfilt(...
-    'lowpassfir',...
-    'FilterOrder', 30,...
-    'PassbandFrequency', 400,...
-    'StopbandFrequency', 450,...
-    'SampleRate', fs);
-
-%% processing settings
-
-%--windowing
-radius = 1; % for each window, time before and after stim (seconds). usually 1s, for total window length of 2s 
-
-
-%--post-stim breathing windows
-insp_dur_max = 100;
-exp_delay = 50;
-exp_dur_max = 300;
-
-%   insp_dur_max: how long after stimulation to check for inspiration (milliseconds). usually 100ms
-%   exp_delay: how long to wait after stimulation before checking for expiration (milliseconds). usually 50ms
-%   exp_dur_max: window after call onset in which to check expiratory amplitude. usually 300ms 
-
-
-%--spectrogram options
-f_low = 500;
-f_high = 10000;
-filt_type = 'butterworth';
-
-%--noise thresholding options
-show_onsets = 1;
-
-q = 5;  % threshold = q*MEDIAN
-
-% NOTE: below values are in ms
-min_int = 10;  % minimum time between 2 notes to be considered separate notes (else merged)
-min_dur = 15;  % minimum duration of note to be considered (else ignored)
-
-stim_i = 30001;  % stimulation onset frame index
-
-post_stim_call_window = ([15 150] * fs/1000)+stim_i;  % only check for call trial within this window after stim onset
-
+    p.filt_breath.type,...
+    'FilterOrder', p.filt_breath.FilterOrder,...
+    'PassbandFrequency', p.filt_breath.PassbandFrequency,...
+    'StopbandFrequency', p.filt_breath.StopbandFrequency,...
+    'SampleRate', p.fs);
 
 %% STEP 2: restructure data, filter breathing
-
-labels = {"current", "frequency", "length"};
 
 if verbose 
     disp('Restructuring data...');
@@ -87,14 +110,15 @@ end
 proc_data = s2_restructure( ...
     unproc_data, ...
     [save_prefix '_proc_data.mat'], ...
-    deq_br, labels, radius, insp_dur_max, exp_delay, exp_dur_max);
+    deq_br, p.files.labels, p.window.radius, p.breath_time.insp_dur_max, p.breath_time.exp_delay, p.breath_time.exp_dur_max);
 
 if verbose 
     toc
     disp(['Restructured! Saved to: ' save_prefix '_proc_data.mat' newline]);
 end
 
-%% STEP 3: segment calls
+%% STEP 3: segment calls.
+% filter/smooth happens here too
 
 if verbose 
     disp('Segmenting calls...');
@@ -103,8 +127,8 @@ end
 call_seg_data = s3_segment_calls( ...
     proc_data, ...
     [save_prefix '_call_seg_data.mat'],...
-    fs, f_low, f_high, filt_type, ...
-    min_int, min_dur, q, stim_i, post_stim_call_window);
+    p.fs, p.filt_smooth.f_low, p.filt_smooth.f_high, p.filt_smooth.sm_window, p.filt_smooth.filt_type, ...
+    p.call_seg.p.call_seg.min_int, min_dur, p.call_seg.q, p.window.stim_i, p.breath_time.post_stim_call_window);
 
 if verbose 
     disp(['Segmented! Saved to: ' save_prefix '_call_seg_data.mat' newline]);
