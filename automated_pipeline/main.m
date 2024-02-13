@@ -19,8 +19,8 @@ p.files.save_folder = '/Users/cirorandazzo/ek-spectral-analysis/data/pipeline/te
 % p.files.save_folder = '/Users/cirorandazzo/ek-spectral-analysis/data/pipeline';
 p.files.bird_name = 'bk68wh15';
 
-p.files.labels = {"current", "frequency", "length"};
-% p.files.labels = {};
+% p.files.labels = {"current", "frequency", "length"};
+p.files.labels = {};
 
 save_prefix = [p.files.save_folder  '/'  p.files.bird_name ];
 
@@ -57,6 +57,17 @@ p.call_seg.q = 5;  % threshold = p.call_seg.q*MEDIAN
 
 p.call_seg.min_int = 10;  % ms; minimum time between 2 notes to be considered separate notes (else merged)
 p.call_seg.min_dur = 15;  % ms; minimum duration of note to be considered (else ignored)
+
+%--breath segmentation
+p.breath_seg.dur_thresh = 10 * p.fs / 1000;
+p.breath_seg.exp_thresh = 0.01;
+p.breath_seg.insp_thresh = -0.03;
+
+% time (ms) before/after stim to consider breaths "pre"/"post" call
+p.breath_seg.pre_delay  = 10 / p.fs * 1000;  % 10 frames
+p.breath_seg.post_delay = 150;  % 150 ms
+
+%--call vicinity
 
 
 %% STEP 1: load intan data
@@ -127,19 +138,55 @@ end
 call_seg_data = s3_segment_calls( ...
     proc_data, ...
     [save_prefix '_call_seg_data.mat'],...
-    p.fs, p.filt_smooth.f_low, p.filt_smooth.f_high, p.filt_smooth.sm_window, p.filt_smooth.filt_type, ...
-    p.call_seg.p.call_seg.min_int, min_dur, p.call_seg.q, p.window.stim_i, p.breath_time.post_stim_call_window);
+    p.fs, ...
+    p.filt_smooth.f_low, ...
+    p.filt_smooth.f_high, ...
+    p.filt_smooth.sm_window, ...
+    p.filt_smooth.filt_type, ...
+    p.call_seg.min_int, ...
+    p.call_seg.min_dur, ...
+    p.call_seg.q, ...
+    p.window.stim_i, ...
+    p.breath_time.post_stim_call_window);
 
 if verbose 
-    disp(['Segmented! Saved to: ' save_prefix '_call_seg_data.mat' newline]);
+    disp(['Segmented calls! Saved to: ' save_prefix '_call_seg_data.mat' newline]);
 end
 
 % see b_segment_calls.m for code to plot spectrograms for subset of trials
 % (eg, where no call is found)
 
 
-%% TODO: breath segmentation
-
-%% breath segmentation parameters
-
 %% STEP 4: segment breaths
+
+if verbose 
+    disp('Segmenting breaths...');
+end
+
+call_breath_seg_data = s4_segment_breaths( ...
+    call_seg_data, ...
+    [save_prefix '_breath_seg_data.mat'], ...
+    p.fs, ...
+    p.window.stim_i, ...
+    p.breath_seg.dur_thresh, ...
+    p.breath_seg.exp_thresh, ...
+    p.breath_seg.insp_thresh, ...
+    p.breath_seg.pre_delay, ...
+    p.breath_seg.post_delay ...
+    );
+
+if verbose 
+    disp(['Segmented breaths! Saved to: ' save_prefix '_breath_seg_data.mat' newline]);
+end
+
+
+%% STEP 5: call vicinity analysis
+% TODO: what do breaths look like directly before/after call?
+
+%% SAVE PARAMETERS
+
+save([save_prefix '_parameters.mat'], 'p');
+
+if verbose 
+    disp(['Parameters saved to: ' save_prefix '_parameters.mat' newline]);
+end
