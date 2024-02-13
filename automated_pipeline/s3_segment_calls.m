@@ -1,5 +1,5 @@
 function [call_seg_data] = s3_segment_calls( ...
-    proc_data, save_file, fs, f_low, f_high, filter_type, ...
+    proc_data, save_file, fs, f_low, f_high, sm_window, filter_type, ...
     min_int, min_dur, q, stim_i, post_stim_call_window)
 % S3_CALL_SEGMENT
 % 2024.02.12 CDR from b_segment_calls
@@ -13,7 +13,7 @@ tic;
 for c=length(proc_data):-1:1  % for each condition
     a = proc_data(c).audio;
     
-    audio_filt = filt_rec_smooth(a, fs, f_low, f_high, filter_type); 
+    audio_filt = filt_rec_smooth(a, fs, f_low, f_high, sm_window, filter_type); 
     warning('using default values for filt_rec_smooth/evsmooth smooth window (2ms).');
 
     [proc_data(c).noise_thresholds, ...
