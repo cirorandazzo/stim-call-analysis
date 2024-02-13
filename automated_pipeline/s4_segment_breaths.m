@@ -23,7 +23,9 @@ end
 call_breath_seg_data = call_seg_data;
 [call_breath_seg_data.breath_seg] = breath_seg_data{:};
 
-save(save_file, "call_breath_seg_data");
+if ~isempty(save_file)
+    save(save_file, "call_breath_seg_data");
+end
 
 end
 

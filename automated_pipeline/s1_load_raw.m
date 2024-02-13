@@ -31,7 +31,9 @@ unproc_data = arrayfun(@(x) readIntanWrapper(x, labels, "SuppressOutput"), file_
 
 %%
 
-save(save_path, "unproc_data");
+if ~isempty(save_file)
+    save(save_path, "unproc_data");
+end
 
 end
 

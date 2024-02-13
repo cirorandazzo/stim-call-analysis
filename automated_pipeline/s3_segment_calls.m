@@ -64,8 +64,9 @@ call_seg_data = proc_data;
 toc;
 %% SAVE
 
-save(save_file, 'call_seg_data')
-
+if ~isempty(save_file)
+    save(save_file, 'call_seg_data')
+end
 
 end
 

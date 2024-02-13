@@ -92,8 +92,10 @@ empty_cond = cellfun(@(x) isempty(x), {proc_data.breathing});
 proc_data = proc_data(~empty_cond);
 
 %% save
-save(save_path, 'proc_data')
 
+if ~isempty(save_file)
+    save(save_path, 'proc_data');
+end
 
 end
 
