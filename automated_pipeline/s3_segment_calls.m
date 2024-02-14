@@ -1,5 +1,5 @@
 function [call_seg_data] = s3_segment_calls( ...
-    proc_data, save_file, fs, f_low, f_high, sm_window, filter_type, ...
+    proc_data, save_path, fs, f_low, f_high, sm_window, filter_type, ...
     min_int, min_dur, q, stim_i, post_stim_call_window)
 % S3_SEGMENT_CALLS
 % 2024.02.12 CDR from b_segment_calls
@@ -64,8 +64,8 @@ call_seg_data = proc_data;
 toc;
 %% SAVE
 
-if ~isempty(save_file)
-    save(save_file, 'call_seg_data')
+if ~isempty(save_path)
+    save(save_path, 'call_seg_data')
 end
 
 end

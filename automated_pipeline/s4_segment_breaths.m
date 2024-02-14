@@ -1,5 +1,5 @@
 function [call_breath_seg_data] = s4_segment_breaths(...
-    call_seg_data, save_file, fs, stim_i, dur_thresh, exp_thresh, insp_thresh, ...
+    call_seg_data, save_path, fs, stim_i, dur_thresh, exp_thresh, insp_thresh, ...
     pre_delay, post_delay)
 % S3_SEGMENT_BREATHS
 % 2024.02.13 CDR based on code from ZK
@@ -11,7 +11,7 @@ function [call_breath_seg_data] = s4_segment_breaths(...
 f_post = post_delay * fs / 1000;
 f_pre = pre_delay * fs / 1000;
 
-breathing = {call_seg_data(:).breathing};
+breathing = {call_seg_data(:).breathing_filt};
 
 for i=1:size(breathing,1)  % for each condition stored in call_seg_data
     breath_seg_data = cellfun( ...  % run for each condition separately (see local helper function segment_each_cond)
@@ -23,8 +23,8 @@ end
 call_breath_seg_data = call_seg_data;
 [call_breath_seg_data.breath_seg] = breath_seg_data{:};
 
-if ~isempty(save_file)
-    save(save_file, "call_breath_seg_data");
+if ~isempty(save_path)
+    save(save_path, "call_breath_seg_data");
 end
 
 end
@@ -71,4 +71,6 @@ function [breath_seg_data_cond] = segment_each_cond( ...
         breath_seg_data_cond(tr).insps_post = insps(insps > stim_i + f_post);   
 
     end
+
+    breath_seg_data_cond = breath_seg_data_cond';
 end 

@@ -75,6 +75,7 @@ for cond=size(conditions,1):-1:1
             %     exp_delay, exp_dur_max), data_cut);
 
             proc_data(cond).breathing=cell2mat({proc_struct.breathing}');
+            proc_data(cond).breathing_filt=cell2mat({proc_struct.breathing_filt}');
             proc_data(cond).audio=cell2mat({proc_struct.audio}');
             proc_data(cond).latencies=cell2mat({proc_struct.latencies}');
             proc_data(cond).exp_amps=cell2mat({proc_struct.exp_amps}');
@@ -93,7 +94,7 @@ proc_data = proc_data(~empty_cond);
 
 %% save
 
-if ~isempty(save_file)
+if ~isempty(save_path)
     save(save_path, 'proc_data');
 end
 
