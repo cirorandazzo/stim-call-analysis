@@ -1,9 +1,8 @@
-%% main.m
+% call_vicinity_pipeline.m
+% (formerly main.m)
 % 2024.02.12 CDR
 % 
 % pipeline for audio data processing
-
-clear;
 
 %% PARAMETERS
 % all processing parameters saved in one big struct for ease of
@@ -36,14 +35,15 @@ if mat_file
     end
 
 else  % directory of intan files
-    unproc_data = s1_load_raw(p.files.raw_data, unproc_save_file);
+    unproc_data = s1_load_raw(p.files.raw_data, p.files.save.unproc_save_file);
 
     if verbose 
         toc
-        disp(['Loaded! Saved to: ' unproc_save_file newline]);
+        disp(['Loaded! Saved to: ' p.files.save.unproc_save_file newline]);
     end
 
 end
+
 
 %% create breathing filter
 
@@ -64,7 +64,7 @@ end
 
 proc_data = s2_restructure( ...
     unproc_data, ...
-    proc_save_file, ...
+    p.files.save.proc_save_file, ...
     deq_br, ...
     p.files.labels, ...
     p.window.radius, ...
@@ -75,7 +75,7 @@ proc_data = s2_restructure( ...
 
 if verbose 
     toc
-    disp(['Restructured! Saved to: ' proc_save_file newline]);
+    disp(['Restructured! Saved to: ' p.files.save.proc_save_file newline]);
 end
 
 %% STEP 3: segment calls.
@@ -83,11 +83,12 @@ end
 
 if verbose 
     disp('Segmenting calls...');
+    tic
 end
 
 call_seg_data = s3_segment_calls( ...
     proc_data, ...
-    call_seg_save_file,...
+    p.files.save.call_seg_save_file,...
     p.fs, ...
     p.filt_smooth.f_low, ...
     p.filt_smooth.f_high, ...
@@ -100,8 +101,9 @@ call_seg_data = s3_segment_calls( ...
     p.breath_time.post_stim_call_window ...
 );
 
-if verbose 
-    disp(['Segmented calls! Saved to: ' call_seg_save_file newline]);
+if verbose
+    toc
+    disp(['Segmented calls! Saved to: ' p.files.save.call_seg_save_file newline]);
 end
 
 % see b_segment_calls.m for code to plot spectrograms for subset of trials
@@ -112,11 +114,12 @@ end
 
 if verbose 
     disp('Segmenting breaths...');
+    tic
 end
 
 call_breath_seg_data = s4_segment_breaths( ...
     call_seg_data, ...
-    call_breath_seg_save_file, ...
+    p.files.save.call_breath_seg_save_file, ...
     p.fs, ...
     p.window.stim_i, ...
     p.breath_seg.dur_thresh, ...
@@ -127,6 +130,7 @@ call_breath_seg_data = s4_segment_breaths( ...
 );
 
 if verbose 
+    toc
     disp(['Segmented breaths! Saved to: ' call_breath_seg_save_file newline]);
 end
 
@@ -136,24 +140,28 @@ end
 
 if verbose 
     disp('Computing breaths around calls...');
+    tic
 end
 
 call_vicinity_data = s5_call_vicinity( ...
     call_breath_seg_data, ...
-    vicinity_save_file, ...
+    p.files.save.vicinity_save_file, ...
     p.fs, ...
     p.window.stim_i, ...
     p.call_vicinity.post_window ...
 );
 
 if verbose 
+    toc
     disp(['Vicinity analysis complete! Saved to: ' vicinity_save_file newline]);
 end
 
 %% SAVE PARAMETERS
 
-save([save_prefix '_parameters.mat'], 'p');
+if ~isempty(p.files.save.parameter_save_file)
+    save(p.files.save.parameter_save_file, 'p');
 
-if verbose 
-    disp(['Parameters saved to: ' save_prefix '_parameters.mat' newline]);
+    if verbose 
+        disp(['Parameters saved to: ' save_prefix '_parameters.mat' newline]);
+    end
 end

@@ -44,21 +44,20 @@ function [breath_seg_data_cond] = segment_each_cond( ...
         a = breathing_mat(tr, :);  % data for 1 stim trial
         
         % roughly recenter around 0 so code works
-        % TODO: (maybe) subtract mean of first bit of trial
-        if max(a(1:stim_i-1))<0
-            a = a + 1.5;
-        elseif min(a(1:stim_i-1))>0
-            a = a-1.5;
-        end
+        a = a - median(a);
 
         % roughly segment breaths
         [insps, exps] = ek_segmentBreaths_current(a, insp_thresh, exp_thresh, dur_thresh);
     
         exps_pre = exps(exps < stim_i);
 
+        % assert(length(exps_pre) > 1);
+
         % recenter based on these segmented breaths
         centered = ek_centerBreaths(a, exps_pre(1), exps_pre(end));
-    
+            % NOTE: if there's only 1 exp found before stim, this statement
+            % has no effect
+
         % re-segment based on centered breathing data
         [insps, exps] = ek_segmentBreaths_current(centered, insp_thresh, exp_thresh, dur_thresh);
     

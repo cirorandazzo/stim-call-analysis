@@ -14,14 +14,15 @@ function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp
 % Return cut stim trials & some call parameters for every valid stimulation
 %   in a previously read Intan file.
 
+    data_stim_dig = data_stim>=1;  % some birds have analog stim data
     
     % == get stim onsets (frame in data_stim) ==
-    stim = find(data_stim == 1);  % indices where stim is occuring
+    stim = find(data_stim_dig == 1);  % indices where stim is occuring.
 
     stim(stim==1) = [];  % ignore stim at very start of data. breaks next statement
     % TODO: do nicer error checking
 
-    stim_t = stim(data_stim(stim - 1) ~=1 );  % stim does not occur prev trial
+    stim_t = stim(data_stim_dig(stim - 1) ~=1 );  % stim does not occur prev trial
 
     r_fr = radius * fs;  % num of frames to take before/after stim
     l_window = 2*r_fr+1;

@@ -8,8 +8,6 @@ function [call_seg_data] = s3_segment_calls( ...
 % - segment calls
 % - get spectral features of processed data
 
-tic;
-
 for c=length(proc_data):-1:1  % for each condition
     a = proc_data(c).audio;
     
@@ -61,7 +59,6 @@ end
 % rename struct
 call_seg_data = proc_data;
 
-toc;
 %% SAVE
 
 if ~isempty(save_path)

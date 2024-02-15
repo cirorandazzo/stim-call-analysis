@@ -5,10 +5,10 @@
 verbose = 0;
 
 %--files
-p.files.raw_data = '/Users/cirorandazzo/ek-spectral-analysis/dm stim/DMStim_bu69bu75.mat';
+p.files.raw_data = '/Users/cirorandazzo/ek-spectral-analysis/dm stim/DMStim_pk30gr9.mat';
 mat_file = true;
 
-p.files.bird_name = 'bu69bu75';
+p.files.bird_name = 'pk30gr9';
 p.files.save_folder = ['/Users/cirorandazzo/ek-spectral-analysis/data/pipeline/dm_stim'];
 
 p.files.labels = {};
@@ -62,7 +62,7 @@ p.call_seg.min_dur = 15;  % ms; minimum duration of note to be considered (else 
 
 %--breath segmentation
 p.breath_seg.dur_thresh = 10 * p.fs / 1000;
-p.breath_seg.exp_thresh = 0.01;
+p.breath_seg.exp_thresh = 0.03;
 p.breath_seg.insp_thresh = -0.03;
 
 % time (ms) before/after stim to consider breaths "pre"/"post" call
