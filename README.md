@@ -1,8 +1,13 @@
-# hvc pharmacology calls
+# stim-call-analysis
 
-Spectral analysis for DM-stim + pharmacology experiments in [Eszter's vocalization project](https://cirorandazzo.github.io/blab-obsidian/EK-Vocalizations/).
+Spectral analysis for DM stim, PAm stim, and HVC pharmacology experiments in [Eszter's vocalization project](https://cirorandazzo.github.io/blab-obsidian/EK-Vocalizations/)
 
-Pipeline:
+formerly:
+- ek_spectral_analysis
+- hvc pharmacology calls
+
+## Pipeline
+
 - `preprocess\`
     - `a1_load_raw_files.m`
     - `a_restruct_data.m`
