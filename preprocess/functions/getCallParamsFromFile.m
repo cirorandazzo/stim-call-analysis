@@ -53,10 +53,6 @@ function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp
         e = stim_t(j) + r_fr;
 
         % == cut & filter data ==
-        if s<1 || e<1
-            disp('here')
-        end
-
         f = filtfilt(deq_breath, data_breathing(s:e));
         
         breathing(j,:) = data_breathing(s:e);

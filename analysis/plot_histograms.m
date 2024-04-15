@@ -1,3 +1,9 @@
+%% plot_histograms.m
+% formerly latency_histograms.m
+% 
+% plot a variety of call features.
+% initially used for comparison of call latency from DM stim vs PAm stim 
+
 
 clear;
 close all;
@@ -5,14 +11,20 @@ close all;
 %%
 
 bird_file = {
-    {"bk68wh15", "PAm", ...
-        "/Users/cirorandazzo/ek-spectral-analysis/processed_data/bk68wh15/fda271e/spectral_features-bk68wh15.mat" , ...
+    {"pk70pu50", "PAm", ...
+        "/Users/cirorandazzo/code/stim-call-analysis/data/processed/pk70pu50_data.mat" , ...
         [1 708 1280 629], ...  % histograms position
         [1 1 1280 1336] };  % spectrograms position
-    {"pu65bk36", "DM", ...
-        "/Users/cirorandazzo/ek-spectral-analysis/processed_data/pu65bk36/7d605cb/spectral_features-pu65bk36.mat", ...
-        [1281 708 1280 629], ...  % histograms position
-        [1281 1 1280 1336] };  % spectrograms position
+    % 
+    % these won't work anymore:
+    % {"bk68wh15", "PAm", ...
+    %     "/Users/cirorandazzo/ek-spectral-analysis/processed_data/bk68wh15/fda271e/spectral_features-bk68wh15.mat" , ...
+    %     [1 708 1280 629], ...  % histograms position
+    %     [1 1 1280 1336] };  % spectrograms position
+    % {"pu65bk36", "DM", ...
+    %     "/Users/cirorandazzo/ek-spectral-analysis/processed_data/pu65bk36/7d605cb/spectral_features-pu65bk36.mat", ...
+    %     [1281 708 1280 629], ...  % histograms position
+    %     [1281 1 1280 1336] };  % spectrograms position
 };
 
 fs = 30000;
@@ -22,10 +34,10 @@ figs = [];
 
 
 plot_hist_latency   = 1;
-plot_hist_duration  = 1;
-plot_hist_fma       = 1;
-plot_hist_fma_amp   = 1;
-plot_hist_audio_amp = 1;
+plot_hist_duration  = 0;
+plot_hist_fma       = 0;
+plot_hist_fma_amp   = 0;
+plot_hist_audio_amp = 0;
 
 plot_spectrograms   = 1;
 
@@ -42,12 +54,15 @@ for i=1:length(bird_file)
     
     load(file);
 
-    if strcmp(bird, "pu65bk36")
-        spectral_features = spectral_features(1);  % just baseline
-    end
+    % if strcmp(bird, "pu65bk36")
+    %     spectral_features = spectral_features(1);  % just baseline
+    % end
+
+    spectral_features = data.call_seg;
 
     i_one_call = spectral_features.one_call;
     
+
     %% latency hist
     if plot_hist_latency
         latencies = spectral_features.onsets;
@@ -144,7 +159,7 @@ for i=1:length(bird_file)
         end
     
     
-        a = spectral_features.audio(select_trials, :);
+        a = data.audio(select_trials, :);
         onsets = spectral_features.onsets;
         offsets = spectral_features.offsets;
         
@@ -174,7 +189,7 @@ for i=1:length(bird_file)
             
             hold on;
             plot([stim_i*1000/fs stim_i*1000/fs], [0, 16000]);
-            xlim([stim_i-1000 stim_i+10000]*1000 / fs);
+            % xlim([stim_i-1000 stim_i+10000]*1000 / fs);
             
             hold off;
             set(gcf, 'Position', spectr_position);

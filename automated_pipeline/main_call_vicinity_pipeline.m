@@ -5,18 +5,24 @@
 
 clear;
 
-param_file_folder = "ek_spectral_analysis/automated_pipeline/parameter_files/dm_stim/*.m";
-parameter_files = dir(param_file_folder);
+param_file_folder = '/Users/cirorandazzo/code/stim-call-analysis/data/dm_pam_parameters';
+parameter_files = dir([param_file_folder filesep '*.m'] );
 
 % parameter_files = parameter_files(~strcmp({parameter_files.name}, "bird_080720.m"));  % this bird has weird stimData (float, not binary)
+
+override_verbose = 0;  % if 1, will ignore verbose argument in individual parameter files to run quietly.
+
+currentDir = cd;
 
 %%
 for i = 1:length(parameter_files)
 
-        [~, f, ~] = fileparts(parameter_files(i).name);
-        
+        [~, f, ~] = fileparts(parameter_files(i).name);  % param filename w/o extension
+
+        cd(parameter_files(i).folder);
         eval(f);  % make parameter struct from .m file
-    
+        cd(currentDir);
+
         assert(~isempty(strfind(p.files.raw_data, p.files.bird_name)));  % ensure birdname is in raw data filename
     
         mkdir(p.files.save_folder);
@@ -25,7 +31,10 @@ for i = 1:length(parameter_files)
         disp(['%=====Running ' f '...'])
         tic
     
-        verbose = 0; % suppress output
+        if override_verbose
+            verbose = 0;
+        end
+
         call_vicinity_pipeline;  % and run 
         
         disp('Success! Saved files:');

@@ -131,7 +131,7 @@ call_breath_seg_data = s4_segment_breaths( ...
 
 if verbose 
     toc
-    disp(['Segmented breaths! Saved to: ' call_breath_seg_save_file newline]);
+    disp(['Segmented breaths! Saved to: ' p.files.save.call_breath_seg_save_file newline]);
 end
 
 
@@ -153,7 +153,7 @@ call_vicinity_data = s5_call_vicinity( ...
 
 if verbose 
     toc
-    disp(['Vicinity analysis complete! Saved to: ' vicinity_save_file newline]);
+    disp(['Vicinity analysis complete! Saved to: ' p.files.save.vicinity_save_file newline]);
 end
 
 %% SAVE PARAMETERS
@@ -162,6 +162,6 @@ if ~isempty(p.files.save.parameter_save_file)
     save(p.files.save.parameter_save_file, 'p');
 
     if verbose 
-        disp(['Parameters saved to: ' save_prefix '_parameters.mat' newline]);
+        disp(['Parameters saved to: ' p.files.save.save_prefix '_parameters.mat' newline]);
     end
 end
