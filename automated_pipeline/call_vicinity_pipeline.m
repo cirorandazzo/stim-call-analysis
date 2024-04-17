@@ -29,17 +29,29 @@ if mat_file
     unproc_data = renameStructField(unproc_data, 'audio', 'sound');
     unproc_data.fs = p.fs;
 
+    labels = [];
+
     if verbose 
         toc
         disp('Loaded!');
     end
 
 else  % directory of intan files
-    unproc_data = s1_load_raw(p.files.raw_data, p.files.save.unproc_save_file);
+    if ~isfield(p.files, 'labels')
+        % format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
+        p.files.labels = {"current", "frequency", "length", [], []};
+    end
+       
+    labels = p.files.labels;
+
+    unproc_data = s1_load_raw(p.files.raw_data, labels);
+
+    save_path = p.files.save.unproc_save_file;
+    save_files_pipeline(save_path, unproc_data, p.files.delete_fields);
 
     if verbose 
-        toc
-        disp(['Loaded! Saved to: ' p.files.save.unproc_save_file newline]);
+        
+        disp(['Loaded! Saved to: ' save_path newline]);
     end
 
 end
@@ -55,7 +67,7 @@ deq_br = designfilt(...
     'SampleRate', p.fs ...
 );
 
-%% STEP 2: restructure data, filter breathing
+%% STEP 2: restructure data, filter  breathing
 
 if verbose 
     disp('Restructuring data...');
@@ -64,18 +76,22 @@ end
 
 proc_data = s2_restructure( ...
     unproc_data, ...
-    p.files.save.proc_save_file, ...
     deq_br, ...
-    p.files.labels, ...
+    labels, ...
     p.window.radius, ...
     p.breath_time.insp_dur_max, ...
     p.breath_time.exp_delay, ...
-    p.breath_time.exp_dur_max ...
+    p.breath_time.exp_dur_max, ...
+    p.window.stim_cooldown...
 );
+
+
+save_path = p.files.save.proc_save_file; 
+save_files_pipeline(save_path, proc_data, p.files.delete_fields);
 
 if verbose 
     toc
-    disp(['Restructured! Saved to: ' p.files.save.proc_save_file newline]);
+    disp(['Restructured! Saved to: ' savepath newline]);
 end
 
 %% STEP 3: segment calls.
@@ -88,7 +104,6 @@ end
 
 call_seg_data = s3_segment_calls( ...
     proc_data, ...
-    p.files.save.call_seg_save_file,...
     p.fs, ...
     p.filt_smooth.f_low, ...
     p.filt_smooth.f_high, ...
@@ -101,9 +116,12 @@ call_seg_data = s3_segment_calls( ...
     p.breath_time.post_stim_call_window ...
 );
 
+save_path = p.files.save.call_seg_save_file;
+save_files_pipeline(save_path, call_seg_data, p.files.delete_fields);
+
 if verbose
     toc
-    disp(['Segmented calls! Saved to: ' p.files.save.call_seg_save_file newline]);
+    disp(['Segmented calls! Saved to: ' save_path newline]);
 end
 
 % see b_segment_calls.m for code to plot spectrograms for subset of trials
@@ -119,7 +137,6 @@ end
 
 call_breath_seg_data = s4_segment_breaths( ...
     call_seg_data, ...
-    p.files.save.call_breath_seg_save_file, ...
     p.fs, ...
     p.window.stim_i, ...
     p.breath_seg.dur_thresh, ...
@@ -129,14 +146,17 @@ call_breath_seg_data = s4_segment_breaths( ...
     p.breath_seg.post_delay ...
 );
 
+save_path = p.files.save.call_breath_seg_save_file;
+save_files_pipeline(save_path, call_breath_seg_data, p.files.delete_fields);
+
+
 if verbose 
     toc
-    disp(['Segmented breaths! Saved to: ' p.files.save.call_breath_seg_save_file newline]);
+    disp(['Segmented breaths! Saved to: ' save_path newline]);
 end
 
 
 %% STEP 5: call vicinity analysis
-% TODO: what do breaths look like directly before/after call?
 
 if verbose 
     disp('Computing breaths around calls...');
@@ -145,15 +165,33 @@ end
 
 call_vicinity_data = s5_call_vicinity( ...
     call_breath_seg_data, ...
-    p.files.save.vicinity_save_file, ...
     p.fs, ...
     p.window.stim_i, ...
     p.call_vicinity.post_window ...
 );
 
+save_path = p.files.save.vicinity_save_file;
+save_files_pipeline(save_path, call_vicinity_data, p.files.delete_fields);
+
+
 if verbose 
     toc
     disp(['Vicinity analysis complete! Saved to: ' p.files.save.vicinity_save_file newline]);
+end
+
+
+%% SAVE BREATHING & AUDIO
+if ~isempty(p.files.save.breathing_audio_save_file)
+
+
+    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt', 'noise_thresholds'};
+    
+    f = fieldnames(call_vicinity_data); 
+    to_rm = f(~ismember(f, to_keep));
+
+    data = rmfield(call_vicinity_data, to_rm);
+
+    save(p.files.save.breathing_audio_save_file, "data");
 end
 
 %% SAVE PARAMETERS

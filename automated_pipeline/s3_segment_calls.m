@@ -1,5 +1,5 @@
 function [call_seg_data] = s3_segment_calls( ...
-    proc_data, save_path, fs, f_low, f_high, sm_window, filter_type, ...
+    proc_data, fs, f_low, f_high, sm_window, filter_type, ...
     min_int, min_dur, q, stim_i, post_stim_call_window)
 % S3_SEGMENT_CALLS
 % 2024.02.12 CDR from b_segment_calls
@@ -12,6 +12,7 @@ for c=length(proc_data):-1:1  % for each condition
     a = proc_data(c).audio;
     
     audio_filt = filt_rec_smooth(a, fs, f_low, f_high, sm_window, filter_type);
+    proc_data(c).audio_filt = audio_filt;
 
     [proc_data(c).noise_thresholds, ...
         onsets, ...
@@ -31,8 +32,7 @@ for c=length(proc_data):-1:1  % for each condition
     onsets = arrayfun(@(i)  onsets{i}(i_good{i}), 1:size(i_on,1), 'UniformOutput',false)';
     offsets = arrayfun(@(i) offsets{i}(i_good{i}), 1:size(i_on,1), 'UniformOutput',false)';
 
-    proc_data(c).audio_filt = audio_filt;
-
+    
     proc_data(c).call_seg.onsets = onsets;
     proc_data(c).call_seg.offsets = offsets;
 
@@ -48,6 +48,14 @@ for c=length(proc_data):-1:1  % for each condition
             @(tr) audio_filt(tr, proc_data(c).call_seg.onsets{tr}:proc_data(c).call_seg.offsets{tr}), ...
             proc_data(c).call_seg.one_call, ...
             'UniformOutput',false);
+
+        proc_data(c).call_seg.acoustic_features = get_acoustic_features( ...
+            proc_data(c).call_seg.audio_filt_call, fs);
+
+        proc_data(c).call_seg.acoustic_features.latencies = arrayfun( ...
+            @(tr) (onsets{tr} - stim_i) * 1000 / fs, ...
+            proc_data(c).call_seg.one_call, ...
+            'UniformOutput',false);
     end
 
     % Save processing parameters
@@ -58,12 +66,6 @@ end
 
 % rename struct
 call_seg_data = proc_data;
-
-%% SAVE
-
-if ~isempty(save_path)
-    save(save_path, 'call_seg_data')
-end
 
 end
 

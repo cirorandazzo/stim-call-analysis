@@ -25,10 +25,10 @@ function data = readIntanWrapper(x, labels, varargin)
         c = ek_read_Intan_RHS2000_file(name, folder);
     end
 
-    data.fs =       c.frequency_parameters.amplifier_sample_rate;
-    data.sound =    c.board_adc_data(1, :);
-    data.stim =     c.board_dig_in_data; %stim_data(stimChan, :);
-    data.breathing= c.board_adc_data(2, :);
-
+    data.fs         = c.frequency_parameters.amplifier_sample_rate;
+    data.sound      = c.board_adc_data(1, :);
+    data.stim       = c.board_dig_in_data; %stim_data(stimChan, :);  % error here might occur bc there are 2 channels
+    data.breathing  = c.board_adc_data(2, :);
+    data.file       = x;
 end
 

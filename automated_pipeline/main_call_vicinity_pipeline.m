@@ -5,14 +5,26 @@
 
 clear;
 
-param_file_folder = '/Users/cirorandazzo/code/stim-call-analysis/data/dm_pam_parameters';
-parameter_files = dir([param_file_folder filesep '*.m'] );
+param_file_folder = '/Users/cirorandazzo/code/stim-call-analysis/data/parameters';
+parameter_files = dir([param_file_folder filesep '**' filesep '*.m'] );
+to_exclude = {... % .m files to exclude from param folder
+    'default_params.m', ... ignore default parameter file
+    'bu26bu73.m', ... bu26bu73 has 2 channels which means diff structure
+    'bird_080720.m', 'pu81bk43.m' ... stim noise in audio channel
+    }; 
+    
+only_these = {'bu69bu75.m'};  % parameter files. make sure to include `.m`
 
-% parameter_files = parameter_files(~strcmp({parameter_files.name}, "bird_080720.m"));  % this bird has weird stimData (float, not binary)
+verbose = 1;
 
-override_verbose = 0;  % if 1, will ignore verbose argument in individual parameter files to run quietly.
+current_dir = cd;
+run_dt = datetime;
 
-currentDir = cd;
+if ~isempty(only_these)
+    parameter_files(~ismember({parameter_files.name}, only_these)) = [];
+end
+
+parameter_files(ismember({parameter_files.name}, to_exclude)) = [];  % exclude files from to_exclude
 
 %%
 for i = 1:length(parameter_files)
@@ -21,7 +33,9 @@ for i = 1:length(parameter_files)
 
         cd(parameter_files(i).folder);
         eval(f);  % make parameter struct from .m file
-        cd(currentDir);
+        cd(current_dir);
+
+        p.run_dt = run_dt;
 
         assert(~isempty(strfind(p.files.raw_data, p.files.bird_name)));  % ensure birdname is in raw data filename
     
@@ -30,10 +44,6 @@ for i = 1:length(parameter_files)
     try
         disp(['%=====Running ' f '...'])
         tic
-    
-        if override_verbose
-            verbose = 0;
-        end
 
         call_vicinity_pipeline;  % and run 
         
@@ -43,7 +53,7 @@ for i = 1:length(parameter_files)
             disp(['  - ' fields{j} ': ' p.files.save.(fields{j})]);
         end
 
-        toc
+        
     
     catch err
         log_file = [p.files.save_folder '/' p.files.bird_name '_ERROR_LOG.txt'];
@@ -59,8 +69,11 @@ for i = 1:length(parameter_files)
 
     end
 
+    disp(['Total time for this bird:'])
+    toc
+    
     disp('  ');  % newline between birds
 
-    clearvars -except a i parameter_files;
+    clearvars -except a i parameter_files verbose current_dir run_dt;
 
 end

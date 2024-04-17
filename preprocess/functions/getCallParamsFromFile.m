@@ -1,7 +1,11 @@
 function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp_amps_t] ...
-    = getCallParamsFromFile(data_stim, data_breathing, data_sound, deq_breath, fs, radius, insp_dur_max, exp_delay, exp_dur_max)
+    = getCallParamsFromFile( ...
+        data_stim, data_breathing, data_sound, deq_breath, fs, radius, ...
+        insp_dur_max, exp_delay, exp_dur_max, cooldown)
 % getCallParamsFromFile.m
 % 2023.12.05 CDR
+% 
+% Warning! Respiratory measures from getCallParamsFromFile.m may not be reliable due to bad centering of respiratory waveform.
 % 
 % TODO: recenter data better. currently adding 0.2, which is not a good way.
 % TODO: documentation
@@ -22,7 +26,7 @@ function [breathing, breathing_filt, audio, latencies, exp_amps, insp_amps, insp
     stim(stim==1) = [];  % ignore stim at very start of data. breaks next statement
     % TODO: do nicer error checking
 
-    stim_t = stim(data_stim_dig(stim - 1) ~=1 );  % stim does not occur prev trial
+    stim_t = stim(~any(data_stim_dig(max(1, stim-cooldown):stim-1) == 1) );  % stim does not occur in 'cooldown' period before
 
     r_fr = radius * fs;  % num of frames to take before/after stim
     l_window = 2*r_fr+1;

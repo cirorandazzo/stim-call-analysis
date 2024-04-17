@@ -1,5 +1,5 @@
-function [proc_data] = s2_restructure(unproc_data, save_path, deq_br, ...
-    labels, radius, insp_dur_max, exp_delay, exp_dur_max)
+function [proc_data] = s2_restructure(unproc_data, deq_br, ...
+    labels, radius, insp_dur_max, exp_delay, exp_dur_max, stim_cooldown)
 % S2_RESTRUCTURE
 % 2024.02.12 CDR from script a_restruct_data
 % 
@@ -12,10 +12,13 @@ function [proc_data] = s2_restructure(unproc_data, save_path, deq_br, ...
 %   empty conditions will be deleted soon)
 
 if ~isempty(labels)
-    parameters = cellfun(@(x) {unique({unproc_data.(x)})}, labels);
+    l = labels(~cellfun(@isempty, labels));  % ignore empty cells in labels
+
+    parameters = cellfun(@(x) {unique({unproc_data.(x)})}, l);
 
     conditions = getUniqueConditionCombos(parameters);
 else
+    l = [];
     conditions = 1;  % if no labels, assume data is all in 1 row
 end
 
@@ -23,8 +26,8 @@ end
 for cond=size(conditions,1):-1:1
     data_i = ones([1 length(unproc_data)], 'logical');  % boolean index for data with this condition (ie, specific set of labels)
 
-    for i=1:length(labels) % assign condition info to this struct
-        param_name = labels{i};
+    for i=1:length(l) % assign condition info to this struct
+        param_name = l{i};
         val = conditions(cond,i);
 
         proc_data(cond).(param_name) = val;  % set parameters in new struct
@@ -49,10 +52,10 @@ for cond=size(conditions,1):-1:1
                    [int_struct.breathing, ...
                     int_struct.breathing_filt,...
                     int_struct.audio, ...
-                    int_struct.latencies, ...
-                    int_struct.exp_amps, ...
-                    int_struct.insp_amps, ...
-                    int_struct.insp_amps_t] ...
+                    ~,... int_struct.latencies, ...
+                    ~,... int_struct.exp_amps, ...
+                    ~,... int_struct.insp_amps, ...
+                    ~]... int_struct.insp_amps_t] ...
                     ...
                     = getCallParamsFromFile(...
                         stim, ...
@@ -63,7 +66,8 @@ for cond=size(conditions,1):-1:1
                         radius, ...
                         insp_dur_max, ...
                         exp_delay, ...
-                        exp_dur_max);
+                        exp_dur_max, ...
+                        stim_cooldown);
 
                     proc_struct = [proc_struct int_struct];
                 end
@@ -79,10 +83,10 @@ for cond=size(conditions,1):-1:1
             proc_data(cond).breathing=cell2mat({proc_struct.breathing}');
             proc_data(cond).breathing_filt=cell2mat({proc_struct.breathing_filt}');
             proc_data(cond).audio=cell2mat({proc_struct.audio}');
-            proc_data(cond).latencies=cell2mat({proc_struct.latencies}');
-            proc_data(cond).exp_amps=cell2mat({proc_struct.exp_amps}');
-            proc_data(cond).insp_amps=cell2mat({proc_struct.insp_amps}');
-            proc_data(cond).insp_amps_t=cell2mat({proc_struct.insp_amps_t}');
+            % proc_data(cond).latencies=cell2mat({proc_struct.latencies}');
+            % proc_data(cond).exp_amps=cell2mat({proc_struct.exp_amps}');
+            % proc_data(cond).insp_amps=cell2mat({proc_struct.insp_amps}');
+            % proc_data(cond).insp_amps_t=cell2mat({proc_struct.insp_amps_t}');
     end
         
     clear a;
@@ -94,11 +98,6 @@ end
 empty_cond = cellfun(@(x) isempty(x), {proc_data.breathing});
 proc_data = proc_data(~empty_cond);
 
-%% save
-
-if ~isempty(save_path)
-    save(save_path, 'proc_data');
-end
 
 end
 

@@ -1,4 +1,4 @@
-function [unproc_data] = s1_load_raw(data_dir,save_path)
+function [unproc_data] = s1_load_raw(data_dir, labels)
 % S1_LOAD_RAW
 % 2024.02.12 CDR from script a1_load_raw_files
 % 
@@ -15,8 +15,6 @@ params = split({file_list(:).name}, "_");
 sz = size(params);
 params = reshape(params, sz(2:3));
 
-labels = {"current", "frequency", "length", [], []};
-
 assert(length(labels) == sz(3));
 
 for i=1:length(labels)
@@ -28,12 +26,6 @@ end
 %%
 
 unproc_data = arrayfun(@(x) readIntanWrapper(x, labels, "SuppressOutput"), file_list);
-
-%%
-
-if ~isempty(save_path)
-    save(save_path, "unproc_data");
-end
 
 end
 
