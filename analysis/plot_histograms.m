@@ -14,7 +14,7 @@ bird_file = {
     {"pk70pu50", "PAm", ...
         "/Users/cirorandazzo/code/stim-call-analysis/data/processed/pk70pu50_data.mat" , ...
         [1 708 1280 629], ...  % histograms position
-        [1 1 1280 1336] };  % spectrograms position
+        [1 1 1280 1336]};  % spectrograms position
     % 
     % these won't work anymore:
     % {"bk68wh15", "PAm", ...
@@ -28,7 +28,7 @@ bird_file = {
 };
 
 fs = 30000;
-stim_i = 30001;
+stim_i = 45001;
 
 figs = [];
 
