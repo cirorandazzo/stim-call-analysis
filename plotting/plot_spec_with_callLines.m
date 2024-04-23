@@ -4,9 +4,15 @@
 % Show 1 trial of spectrogram overlaid with calls. Requires struct output
 % from b_segment_calls.m
 
-trs=[8];
+% trs=[8];
 
+% % for spontaneous data (rec with evtaf)
+% fs = 32000;
+% stim_i = 32001;
+
+% % for stim data
 fs = 30000;
+stim_i = 45001;  % stimulation onset frame index
 
 %--windowing/spectrogram options
 n = 1024;
@@ -17,7 +23,6 @@ f_high = 10000;
 
 spec_threshold = 0; % determined manually; see spectrogram_thresholding.m
 
-stim_i = 45001;  % stimulation onset frame index
 
 %%
 % close all
