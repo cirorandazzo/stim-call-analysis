@@ -1,27 +1,31 @@
 function [call_seg_data] = s3_segment_calls( ...
     proc_data, fs, f_low, f_high, sm_window, filter_type, ...
-    min_int, min_dur, q, stim_i, post_stim_call_window)
+    min_int, min_dur, q, stim_i, post_stim_call_window, varargin)
 % S3_SEGMENT_CALLS
 % 2024.02.12 CDR from b_segment_calls
 % 
-% - filter, rectify, smooth audio data
+% - filter, rectify, smooth audio data (turn filter off with varargin keyword 'nofilt'
 % - segment calls
 % - get spectral features of processed data
 
 for c=length(proc_data):-1:1  % for each condition
-    a = proc_data(c).audio;
-    
-    audio_filt = filt_rec_smooth(a, fs, f_low, f_high, sm_window, filter_type);
-    proc_data(c).audio_filt = audio_filt;
+    if ismember("nofilt", cellstr(varargin))
+        audio = proc_data(c).audio;
+    else
+        a = proc_data(c).audio;
+        
+        audio = filt_rec_smooth(a, fs, f_low, f_high, sm_window, filter_type);
+        proc_data(c).audio_filt = audio;
+    end
 
-    [proc_data(c).noise_thresholds, ...
+    [proc_data(c).call_seg.noise_thresholds, ...
         onsets, ...
         offsets ...
-        ] = segment_calls(audio_filt, fs, min_int, min_dur, q, stim_i);
+        ] = segment_calls(audio, fs, min_int, min_dur, q, stim_i);
 
     %--only take calls within desired window
     
-    % check onsets/onsets individually
+    % check onsets/offsets individually
     i_on = cellfun(@(x) x >=post_stim_call_window(1) & x<=post_stim_call_window(2), onsets, 'UniformOutput',false);
     i_off = cellfun(@(x) x >=post_stim_call_window(1) & x<=post_stim_call_window(2), offsets, 'UniformOutput',false);
 
@@ -45,7 +49,7 @@ for c=length(proc_data):-1:1  % for each condition
     % For trials with EXACTLY ONE call, cut call audio & save 
     if ~isempty(proc_data(c).call_seg.one_call)
         proc_data(c).call_seg.audio_filt_call = arrayfun( ...
-            @(tr) audio_filt(tr, proc_data(c).call_seg.onsets{tr}:proc_data(c).call_seg.offsets{tr}), ...
+            @(tr) audio(tr, proc_data(c).call_seg.onsets{tr}:proc_data(c).call_seg.offsets{tr}), ...
             proc_data(c).call_seg.one_call, ...
             'UniformOutput',false);
 

@@ -1,4 +1,4 @@
-% main_call_vicinity_pipeline.m
+ % main_call_vicinity_pipeline.m
 % 2024.02.14 CDR
 % 
 % Batch run vicinity analysis
@@ -13,7 +13,9 @@ to_exclude = {... % .m files to exclude from param folder
     'bird_080720.m', 'pu81bk43.m' ... stim noise in audio channel
     }; 
     
-only_these = {'bu69bu75.m'};  % parameter files. make sure to include `.m`
+only_these = {};
+% only_these = {'bk68wh15.m'};
+% only_these = {'pu65bk36.m', 'bk68wh15.m', 'bu69bu75.m'};  % parameter files. make sure to include `.m`
 
 verbose = 1;
 

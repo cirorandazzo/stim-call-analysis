@@ -1,12 +1,24 @@
 
 % plots combined group latency historgram given struct 'files' from dm_pam_checks
 
-conds = unique({files.cond});
-savefile = '/Users/cirorandazzo/code/stim-call-analysis/data/figures/combined_hist.png';
+% to_plot = 'insp_latency';
+to_plot = 'audio_latency';
 
-lat_data = [];
+savefile = '/Users/cirorandazzo/code/stim-call-analysis/data/figures/aud_combined_hist.png';
 
 %%
+% add condition info from last folder in filepath
+
+conds = cellfun(@(x) split(x,filesep), {files.folder}, 'UniformOutput', 0);
+conds = cellfun(@(x) x{end}, conds, 'UniformOutput', 0);
+[files.cond] = conds{:};
+
+
+conds = unique({files.cond});
+
+%%
+lat_data = [];
+
 for i=length(conds):-1:1
     c = conds{i};
     lat_data(i).cond = c;
@@ -23,7 +35,18 @@ for i=length(conds):-1:1
 
         load([f.folder filesep f.name]);  % loads var `data`
 
-        latencies_c = [latencies_c data.call_seg.acoustic_features.latencies{:}];
+        i_one_call = [data.call_seg.one_call];
+
+        if strcmp(to_plot, 'audio_latency')
+            to_add = [data.call_seg.acoustic_features.latencies{:}];
+        elseif strcmp(to_plot, 'insp_latency')
+            to_add = [data.breath_seg.latency_insp];
+            to_add = to_add(i_one_call);
+        else
+            error('not a valid plot type');
+        end
+
+        latencies_c = [latencies_c to_add];
     end
 
     lat_data(i).latencies = latencies_c;
@@ -32,9 +55,21 @@ end
 %%
 
 fig = figure;
-xlabel('Latency to call (ms)');
+if strcmp(to_plot, 'audio_latency')
+    xlabel('Latency to call (ms)');
+    title('Audio segmented call latency');
+
+elseif strcmp(to_plot, 'insp_latency')
+    xlabel('Latency to insp (ms)');
+    title('Stim-induced inspiration latency');
+
+else
+    error('not a valid plot type');
+
+end
+
+
 ylabel('Probability');
-title('Audio segmented call latency');
 
 hold on;
 
