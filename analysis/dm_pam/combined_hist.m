@@ -1,10 +1,11 @@
 
 % plots combined group latency historgram given struct 'files' from dm_pam_checks
 
-% to_plot = 'insp_latency';
-to_plot = 'audio_latency';
+to_plot = 'insp_latency';
+savefile = '/Users/cirorandazzo/code/stim-call-analysis/data/figures/insp_combined_hist.svg';
 
-savefile = '/Users/cirorandazzo/code/stim-call-analysis/data/figures/aud_combined_hist.png';
+% to_plot = 'audio_latency';
+% savefile = '/Users/cirorandazzo/code/stim-call-analysis/data/figures/aud_combined_hist.svg';
 
 %%
 % add condition info from last folder in filepath

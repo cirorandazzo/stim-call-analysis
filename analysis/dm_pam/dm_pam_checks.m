@@ -8,9 +8,10 @@ files = dir([proc_folder filesep '**' filesep '*_data.mat'] );
 
 %%
 
-to_plot = {'insp'};
-% to_plot = {'exp', 'aud', 'insp', 'breath_trace'};
+to_plot = { };
+% to_plot = {'exp', 'aud', 'insp', 'breath_trace', 'breath_trace_insp'};
 savefolder = '/Users/cirorandazzo/code/stim-call-analysis/data/figures';
+img_ext = 'svg';  % no dot
 
 for d=1:length(to_plot)
     mkdir(strcat(savefolder, filesep, to_plot{d}));
@@ -21,7 +22,7 @@ exp_tout = 10;  % time (ms) after stim in which to ignore expiration (for latenc
 stim_i = 45001;
 fs = 30000;
 
-xl = [0 200];
+% xl = [0 200];  % this doesnt do anything anymore
 bin_width = 5;
 
 summary = [];
@@ -62,7 +63,7 @@ for i = length(files):-1:1
         ylabel("Count");
         % xlim(xl);
     
-        saveas(fig, [savefolder filesep 'exp' filesep bird '_expHist.png']);
+        saveas(fig, [savefolder filesep 'exp' filesep bird '_expHist.' img_ext]);
         close;
     end
 
@@ -82,10 +83,10 @@ for i = length(files):-1:1
         xlabel("Latency to Inspiration (ms)");
         ylabel("Count");
 
-        % xlim([0,40])
+        % xlim([0 50])
         % xlim(xl);
     
-        saveas(fig, [savefolder filesep 'insp' filesep bird '_inspHist.png']);
+        saveas(fig, [savefolder filesep 'insp' filesep bird '_inspHist.' img_ext]);
         close;
     end
     
@@ -97,14 +98,43 @@ for i = length(files):-1:1
         title([bird ' audio latency (' int2str(length(i_one_call)) ')']);
         xlabel("Latency to Call (ms)");
         ylabel("Count");
-        % xlim(xl);
+        % xlim([40 180]);
     
-        saveas(fig, [savefolder filesep 'aud' filesep bird '_audHist.png']);
+        saveas(fig, [savefolder filesep 'aud' filesep bird '_audHist.' img_ext]);
         close;
     end
 
     if ismember('breath_trace', to_plot)
         % BREATH TRACES
+        fig = figure;
+        hold on;
+
+        title([bird ' breath traces (' int2str(length(i_one_call)) ')']);
+        xlabel('Time since stim (ms)')
+        ylabel('Pressure')
+        
+        trs_one_call = data.call_seg.one_call;
+        rows_to_plot = data.breathing_filt(trs_one_call, :);
+        x = f2ms(1:size(rows_to_plot, 2), fs, stim_i);
+        
+        plot(x, rows_to_plot', 'Color', '#c3c3c3', 'LineWidth', 0.5);  % transpose is very important, might crash computer otherwise :(
+        plot(x, mean(rows_to_plot, 1), 'black', 'LineWidth', 4);
+
+        l = min(rows_to_plot, [], 'all'); 
+        h = max(rows_to_plot, [], 'all');
+        
+        plot([0 0], [l h], 'Color', 'black', 'LineStyle', '--')
+        
+        xlim([-100 200]);
+
+        saveas(fig, [savefolder filesep 'breath_trace' filesep bird '_breathTraces.' img_ext]);
+
+        hold off;
+        close;
+    end
+
+    if ismember('breath_trace_insp', to_plot)
+        % BREATH TRACES WITH INSPS MARKED
         fig = figure;
         hold on;
 
@@ -136,7 +166,7 @@ for i = length(files):-1:1
         
         xlim([-100 200]);
 
-        saveas(fig, [savefolder filesep 'breath_trace' filesep bird '_breathTraces.png']);
+        saveas(fig, [savefolder filesep 'breath_trace_insp' filesep bird '_breathTracesInsp.' img_ext]);
 
         hold off;
         close;
