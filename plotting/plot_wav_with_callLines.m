@@ -1,5 +1,5 @@
 % plot_wav_with_callLines.m
-% 2023.01.08
+% 2024.01.08
 % 
 % Show 1 trial of wav overlaid with calls. Requires struct output
 % from b_segment_calls.m
@@ -7,9 +7,7 @@
 % data = proc_data;
 
 % trs = 132:140;
-% trs = data.call_seg.no_calls([1:5 100:105 300:310]);
-% trs = data.call_seg.one_call([1:5 100:105 400:405]);
-trs = later;
+trs = data.call_seg.multi_calls;
 
 
 % % for evtaf rec (spontaneous data)

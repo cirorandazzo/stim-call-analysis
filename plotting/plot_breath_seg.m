@@ -1,28 +1,26 @@
 
 % from preprocessed data, plot breath waveform with overlaid segmented breath zero crossings
 
-trs = [28:40];
+trs = [28:32, 704:707, 1000:1003];
 % trs = data.call_seg.one_call;
 
 fs = 32000;
 stim_i = 32001;
 
-% fs = 32000;
+% fs = 30000;
 % stim_i = 45001;
 
-for i=1:length(trs)
+for i=length(trs):-1:1
     
     tr = trs(i);
-
     r = data.breath_seg(tr);
-    
+
     centered = r.centered;
     insps_pre = r.insps_pre; 
     exps_pre = r.exps_pre;
     insps_post = r.insps_post;
     exps_post = r.exps_post;
     
-    latency_insp = r.latency_insp;
     
     figure;
     hold on;
@@ -41,11 +39,14 @@ for i=1:length(trs)
     a(exps_pre,  centered, 'blue', fs, stim_i);
     a(insps_post,centered, 'red', fs, stim_i);
     a(exps_post, centered, 'blue', fs, stim_i);
-
-    scatter(latency_insp/1000, centered(ms2f(latency_insp, fs, stim_i)), 'green', 'filled');
-
     % a(insps,centered, 'red', fs, stim_i);
     % a(exps, centered, 'blue', fs, stim_i);
+
+
+    % % FOR INSPIRATION LATENCY
+    % latency_insp = r.latency_insp;
+    % scatter(latency_insp/1000, centered(ms2f(latency_insp, fs, stim_i)), 'green', 'filled');
+
 
     title("tr"+int2str(tr));
     % title("pu65bk36-tr" + int2str(tr) + "-short_exp", 'Interpreter','none')
