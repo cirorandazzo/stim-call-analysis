@@ -74,7 +74,7 @@ for pfile_i = length(parameter_files):-1:1
         disp(['%=====Running ' f '...'])
         timeTotal = tic;
 
-        call_pipeline;  % run pipeline for this bird
+        pipeline;  % run pipeline for this bird
         
         % print saved files
         disp('Success! Saved files:');
