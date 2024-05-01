@@ -10,7 +10,6 @@ mat_file = true;
 p.files.bird_name = 'pu81bk43';
 p.files.group = 'dm';
 
-
 p.fs = 30000;
 
 p = default_params(p);

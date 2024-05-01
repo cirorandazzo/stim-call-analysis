@@ -12,20 +12,6 @@ p.files.group = 'pam';
 
 p.fs = 30000;
 
-
-%--save files
-% empty array to skip saving
-% p.files.save.unproc_save_file   = [save_prefix '_unproc.mat'];
-% p.files.save.proc_save_file     = [save_prefix '_proc.mat'];
-% p.files.save.call_seg_save_file = [save_prefix '_callseg.mat'];
-% p.files.save.call_breath_seg_save_file = [save_prefix '_breathseg.mat'];
-
-p.files.save.unproc_save_file   = [];
-p.files.save.proc_save_file     = [];
-p.files.save.call_seg_save_file = [];
-p.files.save.call_breath_seg_save_file = [];
-
-
 p = default_params(p);
 
 %--breath segmentation

@@ -13,7 +13,6 @@ p.fs = 30000;
 
 p.files.parameter_names = {"depth", [], "frequency", "length", "current", [], []};
 
-
 p = default_params(p);
 
 %--breath segmentation

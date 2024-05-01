@@ -9,7 +9,6 @@ mat_file = 0;
 p.files.bird_name = 'pk70pu50';
 p.files.group = 'pam';
 
-
 p.fs = 30000;
 
 p = default_params(p);
