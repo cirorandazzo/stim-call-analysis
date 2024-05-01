@@ -1,26 +1,84 @@
 function [call_seg_data] = s3_segment_calls( ...
-    proc_data, fs, f_low, f_high, smoothing_window, filter_type, ...
+    proc_data, fs, f_low, f_high, audio_smoothing_window, filter_type, ...
     min_int, min_dur, q, stim_i, post_stim_call_window_ii, options)
-% S3_SEGMENT_CALLS
+% S3_SEGMENT_CALLS.m
 % 2024.02.12 CDR from b_segment_calls
-% 
-%   TODO: s3 documentation
 % 
 % PARAMETERS
 %   TODO
-%   post_stim_call_window_ii: 2x1 integer array containing start and end of
-%       window in which to look for call.
 % 
-% - filter, rectify, smooth audio data (turn filter off with varargin keyword 'nofilt'
+% - filter, rectify, smooth audio data (turn filter off with options.NoAudioProcessing
 % - segment calls
 % - get spectral features of processed data
+% 
+% DESCRIPTION
+% Segments calls from cut trials of raw audio data in `proc_struct` (see s2).
+%   - filtering, rectification, and smoothing on the audio data (turn
+%           filter off with options.NoAudioProcessing = true;
+%   - audio-thresholded segmentation of calls (thres = parameter q * median(pre-stimulus period))
+%   - compute spectral features of cut calls
+% 
+% INPUTS
+%   proc_data:  
+%       Struct array containing processed audio data.
+%   fs:         
+%       Sampling frequency of the audio data.
+%   f_low:      
+%       Low cutoff frequency for filtering.
+%   f_high:     
+%       High cutoff frequency for filtering.
+%   audio_smoothing_window:
+%       Size (in frames) of smoothing window for audio.
+%   filter_type:    
+%       Type of filter to apply. 'hanningfir' or 'butterworth' (see pj_bandpass)
+%   min_int:    
+%       minimum interval (in ms) to consider calls separate (& not merge them) (scalar)
+%   min_dur:
+%       minimum call duration (in ms) of calls (else ignore) (scalar)
+%   q:
+%       noise_threshold = q * median(trial before stimulus). (scalar)
+%   stim_i:
+%       index (in frames) of stimulation. (scalar)
+%   post_stim_call_window_ii:
+%       2x1 integer array containing the start and end indices of the window
+%       in which to look for calls.
+%   options: Optional keyword parameter.
+%       - NoAudioProcessing: If 1, skip audio filtering, rectification, and smoothing
+%
+% OUTPUT
+%   call_seg_data: 
+%       Struct array containing segmented call data. New fields added to
+%       proc data:
+%        - audio_filt: 
+%               filtered, smoothed, rectified audio
+%        - call_seg: 
+%               struct with fields
+%                   - noise_thresholds:
+%                       computed noise thresholds for each cut trial (double, n_trials x 1)
+%                   - onsets:
+%                       cell of doubles. for each trial, contains double array with onset frame for all detected calls
+%                   - offsets:
+%                       cell of doubles. for each trial, contains double array with offset frame for all detected calls
+%                   - no_calls:
+%                       indices of trials where no call was detected
+%                   - one_call:
+%                       indices of trials where exactly one call was detected (ie, "one call trials")
+%                   - multi_calls:
+%                       indices of trials where more than one call was detected
+%                   - audio_filt_call:
+%                       for one call trials, store filtRecSmoothed audio from onset:offset
+%                   - acoustic_features:
+%                       acoustic features computed from audio_filt_calls
+%                   - q/min_int/dur:
+%                       store an extra copy of parameters
+% 
 
 arguments
     proc_data
     fs
     f_low
     f_high
-    smoothing_window
+    audio_smoothing_window
     filter_type
     min_int
     min_dur
@@ -36,7 +94,7 @@ for c=length(proc_data):-1:1  % for each condition
     else
         a = proc_data(c).audio;
         
-        audio = filterRectifySmooth(a, fs, f_low, f_high, smoothing_window, filter_type);
+        audio = filterRectifySmooth(a, fs, f_low, f_high, audio_smoothing_window, filter_type);
         proc_data(c).audio_filt = audio;
     end
 
@@ -192,7 +250,7 @@ function [noise_thresholds, onsets, offsets] =...
 %   - fs: sample freq (Hz)
 %   - min_int: minimum interval (in ms) to consider calls separate (& not merge them) (scalar)
 %   - min_dur: minimum call duration (in ms) of calls (else ignore) (scalar)
-%   - q: q*trial_median = noise_threshold. (scalar)
+%   - q: noise_threshold = q * median(trial before stimulus). (scalar)
 %   - stim_i: index (in frames) of stimulation. (scalar)
 % 
 % OUTPUTS

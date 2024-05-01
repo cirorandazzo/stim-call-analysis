@@ -2,7 +2,12 @@
 % formerly call_vicinity_pipeline.m
 % 2024.02.12 CDR
 % 
-% pipeline for audio data processing
+% Main pipeline for data processing of a single bird. See README in parent 
+% folder for description of the pipeline.
+% 
+% For batch processing, `pipeline.m` is called by `main.m`
+% 
+% Requires external loading of a parameter struct `p`. (see `./parameters`)
 
 %% PARAMETERS
 % all processing parameters saved in one big struct (`p`) for ease of
@@ -12,6 +17,10 @@
 
 set(groot, 'DefaultFigureVisible','off');  % suppress figures
 
+if ~exist("verbose", "var")
+    verbose=true;
+end
+
 %% STEP 1: load intan data
 
 if verbose 
@@ -19,7 +28,7 @@ if verbose
     timeS1 = tic;
 end
 
-if mat_file
+if mat_file  % data has been previously loaded from intan .rhs file --> .mat
     load(p.files.raw_data, 'dataMat');
 
     % rename for consistency
@@ -36,7 +45,7 @@ if mat_file
         disp('Loaded!');
     end
 
-else  % directory of intan files
+else  % load directly from directory of intan rhs files
     if ~isfield(p.files, 'parameter_names')
         % assume format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
         p.files.parameter_names = {"current", "frequency", "length", [], []};
@@ -161,6 +170,29 @@ end
 data = call_breath_seg_data;
 clear call_breath_seg_data;
 
+%% SAVE BREATHING & AUDIO
+if ~isempty(p.files.save.breathing_audio_save_file)
+    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt'};
+    
+    fields = fieldnames(data); 
+    to_rm = fields(~ismember(fields, to_keep));
+
+    breathing_audio_data = rmfield(data, to_rm);
+
+    save(p.files.save.breathing_audio_save_file, "breathing_audio_data");
+    clear breathing_audio_data;
+end
+
+%% SAVE PARAMETERS
+
+if ~isempty(p.files.save.parameter_save_file)
+    save(p.files.save.parameter_save_file, 'p');
+
+    if verbose 
+        disp(['Parameters saved to: ' p.files.save.save_prefix '_parameters.mat' newline]);
+    end
+end
+
 %% PLOT FIGURES
 
 if verbose 
@@ -190,24 +222,3 @@ end
 
 set(groot, 'DefaultFigureVisible','on');  % un-suppress figures
 
-%% SAVE BREATHING & AUDIO
-if ~isempty(p.files.save.breathing_audio_save_file)
-    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt'};
-    
-    fields = fieldnames(data); 
-    to_rm = fields(~ismember(fields, to_keep));
-
-    breathing_audio_data = rmfield(data, to_rm);
-
-    save(p.files.save.breathing_audio_save_file, "breathing_audio_data");
-end
-
-%% SAVE PARAMETERS
-
-if ~isempty(p.files.save.parameter_save_file)
-    save(p.files.save.parameter_save_file, 'p');
-
-    if verbose 
-        disp(['Parameters saved to: ' p.files.save.save_prefix '_parameters.mat' newline]);
-    end
-end

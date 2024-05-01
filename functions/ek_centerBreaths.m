@@ -1,14 +1,10 @@
-
-% center air sac recording around zero
-% for mean three breaths preceding call onset
-
 function [air2] = ek_centerBreaths(air, exp1, exp2)
+% ek_centerBreaths.m
 % 
-% exp1/exp2: onsets of 2 previous expirations (without stim/call)
+% center air sac recording around mean signal between frames exp1 and exp2
 % 
-% don't necessarily need to be subsequent
+% exp1/exp2 are usually onsets of the 2 expirations preceding stimulation/call
 
 z = mean(air(exp1 : exp2));
 
 air2 = air - z;
-

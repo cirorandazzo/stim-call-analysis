@@ -4,7 +4,7 @@ Spectral analysis for DM & PAm stimulation experiments.
 
 Automated pipeline: `./automated_pipeline/main.m`
 
-Major functions:
+## Major function
 
 *Each bird* (in `pipeline.m`)
 - `s1_load_raw`

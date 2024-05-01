@@ -1,8 +1,46 @@
 function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, options)
-% 2024.04.26 CDR from dm_pam_checks.m (2024.04.15)
+% pipeline_plots.m
+% 2024.04.26 CDR (from dm_pam_checks.m, 2024.04.15)
 % 
-% TODO update pipeline_plots readme
-% given processed data structure for a single bird, plot stuff.
+% This function generates and saves plots based on processed data for a single bird. Current options are:
+%     - 'exp':    latency from stimulus to expiration (zero-crossing)
+%     - 'aud':    latency from stimulus to audio-segmented call
+%     - 'insp':   latency from stimulus to inspiration (derivative 
+%                    thresholded)
+%     - 'breath_trace':   plot all breath traces of one-call trials
+%                               overlaid with average breath trace
+%     - 'breath_trace_insp':  as above, but with green dots overlaid on
+%                                   each breath trace to show computed 
+%                                   inspiration
+% 
+%  NOTE: not currently implemented for multiple conditions; will throw error
+% 
+% INPUTS:
+%     data:     A structure containing processed data for a single bird. It 
+%               should include information such as breath segment latencies, 
+%               acoustic features, and breathing traces.
+%     fs:       Sampling frequency of the data.
+%     stim_i:   Frame index of the stimulation in each trial (usually exact 
+%               halfway point).
+%     bird_name:    Name or identifier of the bird.
+%     save_prefix:  Prefix (including savefolder) to use for saving the 
+%                   generated plots. (eg, './figs/bird10-' for 
+%                   './figs/bird10-plot_name.png')
+%     options:      Optional arguments to customize the plots. It can have the
+%                   following fields:
+%           - BinWidthMs:   Width of bins for histograms. Default is 5ms
+%           - BreathTraceWindowMs:  Window for plotting breath traces Default 
+%                                   is [-100 200] ms, where 0 == stimulation 
+%                                   onset.
+%              - ImageExtension:    Extension for saving the images. Default is 
+%                                   'svg'. No leading period!
+%              - ToPlot:    Cell array of strings specifying which plots to 
+%                           generate. See description at top for current 
+%                           options. Default: all plots.
+
+% OUTPUT:
+%     saved_figs: A cell array containing filenames of the saved plots.
+
 
     arguments
         data {struct};
@@ -14,6 +52,10 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         options.BreathTraceWindowMs (2,1) {isnumeric} = [-100 200];
         options.ImageExtension = 'svg';
         options.ToPlot = {'exp', 'aud', 'insp', 'breath_trace', 'breath_trace_insp'};
+    end
+
+    if length(data) ~= 1
+        error('Plotting data struct with multiple conditions is not implemented. As a workaround, you can iterate through each row of data struct and run pipeline_plots on each. Sorry about that!');
     end
 
     saved_figs = {};

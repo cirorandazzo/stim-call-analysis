@@ -6,6 +6,11 @@ function [filtsong]=pj_bandpass(rawsong, Fs, F_low, F_high, varargin)
 %   this was rather slow, but gives nice filtering, now using butterworth
 %   bandpass filters song using fir1 and filtfilt
 %   written in the brainard lab UCSF
+% 
+% cdr note: 2024.05.01
+%   make code error out if unrecognized filter type is passed (instead of
+%   being surprised with butterworth filtered data when you expect
+%   something else)
 
 
 if nargin == 5
@@ -43,7 +48,11 @@ if F_high >= .5*Fs-500
    disp(['F_high has been set to ',num2str(F_high)]);
 end
 
-if exist('filter_type','var') & strcmp(filter_type,'hanningfir')
+if ~exist('filter_type','var') || strcmp(filter_type,'butterworth')
+  % Now using an 8 pole butterworth bandpass filter as default.
+  [b,a]=butter(8,[F_low*2/Fs, F_high*2/Fs]);
+  filtsong=filtfilt(b, a, rawsong);
+elseif strcmp(filter_type,'hanningfir')
   nfir = 512;
   ndelay = fix(nfir/2);
   bfir = fir1(nfir,[F_low*2/Fs, F_high*2/Fs]);
@@ -54,9 +63,7 @@ if exist('filter_type','var') & strcmp(filter_type,'hanningfir')
 %   bfir = fir1(nfir,[F_low*2/Fs, F_high*2/Fs]);
 %   filtsong = filtfilt(bfir,1,rawsong);  
 else
-  % Now using an 8 pole butterworth bandpass filter as default.
-  [b,a]=butter(8,[F_low*2/Fs, F_high*2/Fs]);
-  filtsong=filtfilt(b, a, rawsong);
+    error(strcat("' ",  filter_type, "' is not a valid filter type."));
 end
   
 if length(rawsong) ~= length(filtsong) 

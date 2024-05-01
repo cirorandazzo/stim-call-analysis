@@ -1,26 +1,41 @@
-function [proc_data] = s2_restructure( ...
-    unproc_data, deq_br, labels, trial_radius_s, stim_cooldown_fr)
+function [proc_data] = s2_restructure(unproc_data, deq_br, param_labels, trial_radius_s, stim_cooldown_fr)
 % S2_RESTRUCTURE
 % 2024.02.12 CDR from script a_restruct_data
 % 
-% TODO: s2 documentation
+% Given unprocessed data loaded from Intan (see s1_load_raw), create a data struct where each row of struct contains 1 'condition' (eg, stimulation parameters, drug, lesion, etc)
 % 
-% Given unprocessed data loaded from Intan (see s1_load_raw), restructure
-% the data into a struct
+% For each struct row: 
+%       - Cut trials around stimulation onsets (+/- trial_radius_s seconds),
+%           storing breathing & audio
+%       - Filter breathing & store
+% 
+% PARAMETERS
+% - unproc_data:    loaded from Intan .rhs file
+% - deq_br:         digitalFilter object with which to filter breathing (see 
+%                   `pipeline.m`)
+% - param_labels:       parameter names from which conditions are separated;
+%                       see filename_param_labels in s1
+% - trial_radius_s:     for each window, time in seconds before and after
+%                       stimulation to include in each cut trial
+% - stim_cooldown_fr:   ignore stims which occur within this many frames after
+%                       another stimulation
+% 
+% RETURNS
+% - proc_data:  
 
 %% index data for individual condition
 % parameters: unique values for each label in labels
 % conditions: all unique combinations of parameters (even unused ones;
-%   empty conditions will be deleted soon)
+%   empty conditions will be deleted afterward)
 
-if ~isempty(labels)
-    l = labels(~cellfun(@isempty, labels));  % ignore empty cells in labels
+if ~isempty(param_labels)
+    param_labels = param_labels(~cellfun(@isempty, param_labels));  % ignore empty cells in labels (not parsed by s1)
 
-    parameters = cellfun(@(x) {unique({unproc_data.(x)})}, l);
+    parameters = cellfun(@(x) {unique({unproc_data.(x)})}, param_labels);
 
     conditions = getUniqueConditionCombos(parameters);
 else
-    l = [];
+    param_labels = [];
     conditions = 1;  % if no labels, assume data is all in 1 row
 end
 
@@ -28,8 +43,8 @@ end
 for cond=size(conditions,1):-1:1
     data_i = ones([1 length(unproc_data)], 'logical');  % boolean index for data with this condition (ie, specific set of labels)
 
-    for i=1:length(l) % assign condition info to this struct
-        param_name = l{i};
+    for i=1:length(param_labels) % assign condition info to this struct
+        param_name = param_labels{i};
         val = conditions(cond,i);
 
         proc_data(cond).(param_name) = val;  % set parameters in new struct
