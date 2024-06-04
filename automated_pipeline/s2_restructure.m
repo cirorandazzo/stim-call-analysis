@@ -12,7 +12,8 @@ function [proc_data] = s2_restructure(unproc_data, deq_br, ...
 %   empty conditions will be deleted soon)
 
 if ~isempty(labels)
-    l = labels(~cellfun(@isempty, labels));  % ignore empty cells in labels
+    % l = labels(~cellfun(@isesmpty, labels));  % ignore empty cells in labels
+    l = labels;  % CDR 2024.06.04, labels should not contain empty cells.
 
     parameters = cellfun(@(x) {unique({unproc_data.(x)})}, l);
 
