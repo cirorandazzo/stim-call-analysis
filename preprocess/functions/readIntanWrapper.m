@@ -1,4 +1,4 @@
-function data = readIntanWrapper(x, parameter_names, options)
+function data = readIntanWrapper(x, labels, varargin)
 % readIntanWrapper.m
 % 2023.01.09 CDR
 % 
@@ -6,15 +6,11 @@ function data = readIntanWrapper(x, parameter_names, options)
 % amplitude), load data from file path.
 % 
 % TODO: documentation.
+% 
+% varargin currently supports "SuppressOutput"
 
-    arguments
-        x
-        parameter_names
-        options.SuppressOutput = 1
-    end
-
-    for i=1:length(parameter_names)  % carry over labels from input
-        l = parameter_names{i};
+    for i=1:length(labels)  % carry over labels from input
+        l = labels{i};
         if ~isempty(l)
             data.(l) = x.(l);
         end
@@ -23,7 +19,7 @@ function data = readIntanWrapper(x, parameter_names, options)
     name = x.name;
     folder = x.folder;
 
-    if options.SuppressOutput
+    if ~isempty(varargin) && isa(varargin{1}, "string") && strcmp(varargin{1}, "SuppressOutput")
         [~, c] = evalc("ek_read_Intan_RHS2000_file(name, folder)"); % evalc streams command window output into first var
     else
         c = ek_read_Intan_RHS2000_file(name, folder);

@@ -1,56 +1,15 @@
 function [call_breath_seg_data] = s4_segment_breaths(...
     call_seg_data, fs, stim_i, dur_thresh, exp_thresh, insp_thresh, ...
-    stim_window_pre_ms, stim_window_post_ms, smooth_window, insp_dur_max_ms)
+    pre_delay, post_delay, smooth_window, insp_dur_max)
 % S3_SEGMENT_BREATHS
 % 2024.02.13 CDR based on code from ZK
-% 
-% TODO: s4 documentation
 % 
 % - return data struct with segmented breaths
 % - takes breathing data for every condition in struct (cell of n x fr
 % matrices)
-% 
-% This function segments breaths from 'one call trials' in call_seg_data.
-%   - zero-crossing algorithm for insps/exps
-%   - derivative algorithm for inspirations
-% 
-% INPUTS
-%   call_seg_data: 
-%       See s3 output.
-%   fs: 
-%       Sampling frequency.
-%   stim_i:
-%       Frame index of stimulus in trial
-%   dur_thresh: 
-%       For breath segmentation, minimum amount of time between 2 inspirations or 2 expirations.
-%   exp_thresh: 
-%       Expiration threshold for breath segmentation.
-%   insp_thresh: 
-%       Inspiration threshold for breath segmentation.
-%   stim_window_pre_ms/stim_window_post_ms:
-%       Window around stimulation in ms to consider breath zero-crossings as pre, peri, or post stimulation
-%   smooth_window: 
-%       Size of the smoothing window to be used in inspiration derivative calculations.
-%   insp_dur_max_ms:
-%       Maximum time (ms) after stimulation to look for inspiration
-%
-% OUTPUT
-%   call_breath_seg_data:
-%       call_seg_data with new additional field, `breath_seg` (struct array). each row is a 'one call trial', and contains subfields
-%       - centered:
-%           recentered breathing data
-%       - {exps/insps}_{pre/post/peri}: 
-%           breath zero crossings before/during/after defined stimulation window (see stim_window parameters)
-%       - latency_insp:
-%           latency to inspiration in ms, computed by derivative algorithm 
-%       - latency_insp_f: 
-%           latency to inspiration in frames, computed by derivative algorithm (useful for plotting)
-%       - error:
-%           0 if no error, else stores error with processing this trial.
-% 
 
-stim_window_post_fr = stim_window_post_ms * fs / 1000;
-stim_window_pre_fr = stim_window_pre_ms * fs / 1000;
+f_post = post_delay * fs / 1000;
+f_pre = pre_delay * fs / 1000;
 
 breathing = {call_seg_data(:).breathing_filt};
 
@@ -58,8 +17,8 @@ breath_seg_data = cell( size(breathing) );
 
 for i=1:length(breathing) % run for each condition separately (see local helper function segment_each_cond)
     x = breathing{i};
-    breath_seg_data{i} = segmentEachCondition(x, stim_i, fs, dur_thresh, ...
-        exp_thresh, insp_thresh, stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms);
+    breath_seg_data{i} = segment_each_cond(x, stim_i, fs, dur_thresh, ...
+        exp_thresh, insp_thresh, f_pre, f_post, smooth_window, insp_dur_max);
 end
 
 call_breath_seg_data = call_seg_data;
@@ -68,17 +27,17 @@ call_breath_seg_data = call_seg_data;
 end
 
 
-%% LOCAL HELPERS
+%%
 
-function [breath_seg_data_cond] = segmentEachCondition( ...
+function [breath_seg_data_cond] = segment_each_cond( ...
     breathing, stim_i, fs, dur_thresh, exp_thresh, insp_thresh, ...
-    stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms)
+    f_pre, f_post, smooth_window, insp_dur_max_t)
 % LOCAL HELPER FUNCTION    
 % for all breathing data in given condition, run segmentation code trial by
 % trial
     breath_seg_data_cond = [];
 
-    insp_dur_max_f = insp_dur_max_ms * fs / 1000;
+    insp_dur_max_f = insp_dur_max_t * fs / 1000;
 
 
     for tr = size(breathing, 1):-1:1
@@ -107,14 +66,11 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
         
             breath_seg_data_cond(tr).centered = centered;
     
-            breath_seg_data_cond(tr).exps_pre = exps(exps < (stim_i - stim_window_pre_fr));
-            breath_seg_data_cond(tr).insps_pre = insps(insps < (stim_i - stim_window_pre_fr));
+            breath_seg_data_cond(tr).exps_pre = exps(exps < (stim_i - f_pre));
+            breath_seg_data_cond(tr).insps_pre = insps(insps < (stim_i - f_pre));
         
-            breath_seg_data_cond(tr).exps_post = exps(exps > (stim_i + stim_window_post_fr));
-            breath_seg_data_cond(tr).insps_post = insps(insps > (stim_i + stim_window_post_fr));
-            
-            breath_seg_data_cond(tr).exps_peri = exps(exps >= (stim_i - stim_window_pre_fr) & exps <= (stim_i + stim_window_post_fr));
-            breath_seg_data_cond(tr).insps_peri = insps(insps >= (stim_i - stim_window_pre_fr) & insps <= (stim_i + stim_window_post_fr));
+            breath_seg_data_cond(tr).exps_post = exps(exps > (stim_i + f_post));
+            breath_seg_data_cond(tr).insps_post = insps(insps > (stim_i + f_post));
     
             % exp
             latency_exp = (breath_seg_data_cond(tr).exps_post(1) - stim_i) * 1000 / fs;
@@ -128,7 +84,7 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
 
         % LATENCIES
         % insp
-        breath_seg_data_cond(tr).latency_insp_f = getInspiratoryLatency(breathing(tr, :), stim_i, insp_dur_max_f, smooth_window);
+        breath_seg_data_cond(tr).latency_insp_f = get_insp_latency(breathing(tr, :), stim_i, insp_dur_max_f, smooth_window);
         breath_seg_data_cond(tr).latency_insp = [breath_seg_data_cond(tr).latency_insp_f] / fs * 1000;
         
     end
@@ -137,7 +93,7 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
 end 
 
 
-function i = getInspiratoryLatency(y, stim_i, insp_dur_max_f, smooth_window)
+function i = get_insp_latency(y, stim_i, insp_dur_max_f, smooth_window)
     % get index of minimum second derivative in window after stim
     % pass in filtered breathing data
 

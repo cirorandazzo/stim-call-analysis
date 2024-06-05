@@ -29,7 +29,8 @@ function [proc_data] = s2_restructure(unproc_data, deq_br, param_labels, trial_r
 %   empty conditions will be deleted afterward)
 
 if ~isempty(param_labels)
-    param_labels = param_labels(~cellfun(@isempty, param_labels));  % ignore empty cells in labels (not parsed by s1)
+    % CDR 2024.06.04, labels should not contain empty cells.
+    % param_labels = param_labels(~cellfun(@isesmpty, param_labels));  % ignore empty cells in labels (not parsed by s1)
 
     parameters = cellfun(@(x) {unique({unproc_data.(x)})}, param_labels);
 
