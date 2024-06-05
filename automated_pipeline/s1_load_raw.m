@@ -9,10 +9,18 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
 %   Read all rhs files listed in struct output of dir command.
 %   Optionally, parse metadata from filename of each rhs with 
 %   filename_labels (see arguments below)
+% (2) CSV batch file containing at minimum column "folder"
+%   specifying direct parent of .rhs's for a given 
+%   condition, and optionally 'labels' providing experimental
+%   metadata (eg, stimulation parameters). automatically
+%   excludes column 'notes' from being parsed
 % 
 % 
 % ARGUMENTS
-%   file_list: either (1) output of dir() with only rhs files.
+%   file_list: either (1) output of dir() containing only rhs
+%       files. or (2) CSV batch file as struct array (eg, read
+%       with readtable() and convert with table2struct(). see
+%       description above for more information.
 % 
 %   KEYWORD
 %       file_list_type (default 'dir'): describe input type of file_list,
@@ -23,6 +31,18 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
 %           to unproc_data output Values to ignore should be empty
 %           array.
 % 
+% RETURNS
+%   unproc_data:    struct array where each row contains data from one rhs 
+%                   file in data_dir). contains fields:
+%       - (label):  for label in filename_param_labels, store char array of 
+%                   parsed parameter. (eg, unproc_data(1).current == '10uA' )
+%       - fs:       sampling frequency (Hz)
+%       - sound:    audio data in each rhs file
+%       - stim:     stimulation data in each rhs file. usually digital (1/0),
+%                   but sometimes analog. code is robust to both
+%       - breathing:breath pressure data in each rhs file
+%       - file:     struct containing metadata for this rhs file (from matlab 
+%                   `dir` function)
 %           Eg, for '20uA_100Hz_50ms_230725_143022.rhs', input
 %           {"current", "frequency", "length", [], []};
 % 
