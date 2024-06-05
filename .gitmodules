@@ -1,0 +1,3 @@
+[submodule "stimulation_parameters"]
+	path = stimulation_parameters
+	url = https://github.com/cirorandazzo/stimulation_parameters

@@ -5,7 +5,7 @@
 
 clear;
 
-param_file_folder = '/Users/cirorandazzo/code/stim-call-analysis/data/parameters';
+param_file_folder = '/Users/cirorandazzo/code/stim-call-analysis/stimulation_parameters';
 parameter_files = dir([param_file_folder filesep '**' filesep '*.m'] );
 to_exclude = {... % .m files to exclude from param folder
     'default_params.m', ... ignore default parameter file
