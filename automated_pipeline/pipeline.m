@@ -28,41 +28,49 @@ if verbose
     timeS1 = tic;
 end
 
-if mat_file  % data has been previously loaded from intan .rhs file --> .mat
+[root, name, ext] = fileparts(p.files.raw_data);
+
+if isempty(ext)  % DIRECTORY, read all .rhs files
+    file_list = dir(fullfile(data_dir, ['**' filesep '*.rhs']));  % get all intan rhs files
+    
+    if ~isfield(p.files, 'labels')
+        % format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
+        % p.files.labels = {"current", "frequency", "length", [], []};
+        p.files.labels = {}; % CDR 2024.06.04 - don't presume labels if not given.
+    end
+
+    [unproc_data, labels] = s1_load_raw(file_list, filename_labels=p.files.labels);
+
+elseif strcmpi(ext, '.csv')  % .csv batch specifying parameters & rhs folder names
+    files = table2struct(readtable(p.files.raw_data));
+
+    [unproc_data, labels] = s1_load_raw(files, file_list_type='csv_batch');
+
+elseif strcmpi(ext, '.mat')  % preprocessed .mat file 
     load(p.files.raw_data, 'dataMat');
 
     % rename for consistency
     unproc_data = dataMat;
     clear dataMat;
 
+    if isfield(p.files, 'labels')
+        labels = p.files.labels;
+    else
+        labels = {};
+    end
     unproc_data = renameStructField(unproc_data, 'audio', 'sound');
     unproc_data.fs = p.fs;
 
-    parameter_names = [];
+else   % error
+    error(['Unknown raw file type: ' ext])
+end
 
-    if verbose 
-        toc(timeS1);
-        disp('Loaded!');
-    end
+save_path = p.files.save.unproc_save_file;
+save_files_pipeline(save_path, unproc_data, p.files.delete_fields);
 
-else  % load directly from directory of intan rhs files
-    if ~isfield(p.files, 'parameter_names')
-        % assume format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
-        p.files.parameter_names = {"current", "frequency", "length", [], []};
-    end
-       
-    parameter_names = p.files.parameter_names;
-
-    unproc_data = s1_load_raw(p.files.raw_data, parameter_names);
-
-    save_path = p.files.save.unproc_save_file;
-    save_files_pipeline(save_path, unproc_data, p.files.delete_fields);
-
-    if verbose 
-        toc(timeS1);
-        disp(['Loaded! Saved to: ' save_path newline]);
-    end
-
+if verbose 
+    toc(timeS1);
+    disp(['Loaded! Saved to: ' save_path newline]);
 end
 
 
