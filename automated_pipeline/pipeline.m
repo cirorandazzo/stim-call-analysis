@@ -1,65 +1,69 @@
-% call_vicinity_pipeline.m
-% (formerly main.m)
+% pipeline.m
+% formerly call_vicinity_pipeline.m
 % 2024.02.12 CDR
 % 
-% pipeline for audio data processing
+% Main pipeline for data processing of a single bird. See README in parent 
+% folder for description of the pipeline.
+% 
+% For batch processing, `pipeline.m` is called by `main.m`
+% 
+% Requires external loading of a parameter struct `p`. (see `./parameters`)
 
 %% PARAMETERS
-% all processing parameters saved in one big struct for ease of
+% all processing parameters saved in one big struct (`p`) for ease of
 % saving/loading parameters
 %
 % load from a parameter file separately. eg, run `bu69bu75`
-% 
 
+set(groot, 'DefaultFigureVisible','off');  % suppress figures
+
+if ~exist("verbose", "var")
+    verbose=true;
+end
 
 %% STEP 1: load intan data
 
 if verbose 
     disp('Loading raw data...');
-    tic
+    timeS1 = tic;
 end
 
-[root, name, ext] = fileparts(p.files.raw_data);
-
-if isempty(ext)  % DIRECTORY, read all .rhs files
-    file_list = dir(fullfile(data_dir, ['**' filesep '*.rhs']));  % get all intan rhs files
-    
-    if ~isfield(p.files, 'labels')
-        % format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
-        % p.files.labels = {"current", "frequency", "length", [], []};
-        p.files.labels = {}; % CDR 2024.06.04 - don't presume labels if not given.
-    end
-
-    [unproc_data, labels] = s1_load_raw(file_list, filename_labels=p.files.labels);
-
-elseif strcmpi(ext, '.csv')  % .csv batch specifying parameters & rhs folder names
-    files = table2struct(readtable(p.files.raw_data));
-
-    [unproc_data, labels] = s1_load_raw(files, file_list_type='csv_batch');
-
-elseif strcmpi(ext, '.mat')  % preprocessed .mat file 
+if mat_file  % data has been previously loaded from intan .rhs file --> .mat
     load(p.files.raw_data, 'dataMat');
 
     % rename for consistency
     unproc_data = dataMat;
     clear dataMat;
 
-    labels = p.files.labels;
     unproc_data = renameStructField(unproc_data, 'audio', 'sound');
     unproc_data.fs = p.fs;
 
-else   % error
-    error(['Unknown raw file type: ' ext])
+    parameter_names = [];
+
+    if verbose 
+        toc(timeS1);
+        disp('Loaded!');
+    end
+
+else  % load directly from directory of intan rhs files
+    if ~isfield(p.files, 'parameter_names')
+        % assume format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
+        p.files.parameter_names = {"current", "frequency", "length", [], []};
+    end
+       
+    parameter_names = p.files.parameter_names;
+
+    unproc_data = s1_load_raw(p.files.raw_data, parameter_names);
+
+    save_path = p.files.save.unproc_save_file;
+    save_files_pipeline(save_path, unproc_data, p.files.delete_fields);
+
+    if verbose 
+        toc(timeS1);
+        disp(['Loaded! Saved to: ' save_path newline]);
+    end
+
 end
-
-save_path = p.files.save.unproc_save_file;
-save_files_pipeline(save_path, unproc_data, p.files.delete_fields);
-
-if verbose 
-    toc;
-    disp(['Loaded! Saved to: ' save_path newline]);
-end
-
 
 
 %% create breathing filter
@@ -76,26 +80,23 @@ deq_br = designfilt(...
 
 if verbose 
     disp('Restructuring data...');
-    tic
+    timeS2 = tic;
 end
 
 proc_data = s2_restructure( ...
     unproc_data, ...
     deq_br, ...
-    labels, ...
-    p.window.radius, ...
-    p.breath_time.insp_dur_max, ...
-    p.breath_time.exp_delay, ...
-    p.breath_time.exp_dur_max, ...
+    parameter_names, ...
+    p.window.radius_seconds, ...
     p.window.stim_cooldown...
 );
 
-
+clear unproc_data;
 save_path = p.files.save.proc_save_file; 
 save_files_pipeline(save_path, proc_data, p.files.delete_fields);
 
 if verbose 
-    toc
+    toc(timeS2);
     disp(['Restructured! Saved to: ' savepath newline]);
 end
 
@@ -104,28 +105,29 @@ end
 
 if verbose 
     disp('Segmenting calls...');
-    tic
+    timeS3 = tic;
 end
 
 call_seg_data = s3_segment_calls( ...
     proc_data, ...
     p.fs, ...
-    p.filt_smooth.f_low, ...
-    p.filt_smooth.f_high, ...
-    p.filt_smooth.sm_window, ...
-    p.filt_smooth.filt_type, ...
-    p.call_seg.min_int, ...
-    p.call_seg.min_dur, ...
+    p.audio_filt_smooth.f_low, ...
+    p.audio_filt_smooth.f_high, ...
+    p.audio_filt_smooth.smooth_window_ms, ...
+    p.audio_filt_smooth.filt_type, ...
+    p.call_seg.min_interval_ms, ...
+    p.call_seg.min_duration_ms, ...
     p.call_seg.q, ...
     p.window.stim_i, ...
-    p.breath_time.post_stim_call_window ...
+    p.call_seg.post_stim_call_window_ii ...
 );
 
+clear proc_data;
 save_path = p.files.save.call_seg_save_file;
 save_files_pipeline(save_path, call_seg_data, p.files.delete_fields);
 
 if verbose
-    toc
+    toc(timeS3);
     disp(['Segmented calls! Saved to: ' save_path newline]);
 end
 
@@ -137,68 +139,48 @@ end
 
 if verbose 
     disp('Segmenting breaths...');
-    tic
+    timeS4 = tic;
 end
 
 call_breath_seg_data = s4_segment_breaths( ...
     call_seg_data, ...
     p.fs, ...
     p.window.stim_i, ...
-    p.breath_seg.dur_thresh, ...
+    p.breath_seg.min_duration_fr, ...
     p.breath_seg.exp_thresh, ...
     p.breath_seg.insp_thresh, ...
-    p.breath_seg.pre_delay, ...
-    p.breath_seg.post_delay, ...
-    p.breath_seg.der_smooth_window, ...
-    p.breath_seg.insp_window ...
+    p.breath_seg.stim_window.pre_stim_ms, ...
+    p.breath_seg.stim_window.post_stim_ms, ...
+    p.breath_seg.derivative_smooth_window_ms, ...
+    p.breath_seg.stim_induced_insp_window_ms ...
 );
 
+clear call_seg_data;
 save_path = p.files.save.call_breath_seg_save_file;
 save_files_pipeline(save_path, call_breath_seg_data, p.files.delete_fields);
 
-
 if verbose 
-    toc
+    toc(timeS4);
     disp(['Segmented breaths! Saved to: ' save_path newline]);
 end
 
 
-%% STEP 5: call vicinity analysis
+%% RENAME FINAL STRUCT
 
-if verbose 
-    disp('Computing breaths around calls...');
-    tic
-end
-
-call_vicinity_data = s5_call_vicinity( ...
-    call_breath_seg_data, ...
-    p.fs, ...
-    p.window.stim_i, ...
-    p.call_vicinity.post_window ...
-);
-
-save_path = p.files.save.vicinity_save_file;
-save_files_pipeline(save_path, call_vicinity_data, p.files.delete_fields);
-
-
-if verbose 
-    toc
-    disp(['Vicinity analysis complete! Saved to: ' p.files.save.vicinity_save_file newline]);
-end
-
+data = call_breath_seg_data;
+clear call_breath_seg_data;
 
 %% SAVE BREATHING & AUDIO
 if ~isempty(p.files.save.breathing_audio_save_file)
-
-
-    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt', 'noise_thresholds'};
+    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt'};
     
-    f = fieldnames(call_vicinity_data); 
-    to_rm = f(~ismember(f, to_keep));
+    fields = fieldnames(data); 
+    to_rm = fields(~ismember(fields, to_keep));
 
-    data = rmfield(call_vicinity_data, to_rm);
+    breathing_audio_data = rmfield(data, to_rm);
 
-    save(p.files.save.breathing_audio_save_file, "data");
+    save(p.files.save.breathing_audio_save_file, "breathing_audio_data");
+    clear breathing_audio_data;
 end
 
 %% SAVE PARAMETERS
@@ -210,3 +192,33 @@ if ~isempty(p.files.save.parameter_save_file)
         disp(['Parameters saved to: ' p.files.save.save_prefix '_parameters.mat' newline]);
     end
 end
+
+%% PLOT FIGURES
+
+if verbose 
+    disp('Plotting...');
+    timePlot = tic;
+end
+
+saved_figs = pipeline_plots( ...
+    data, ...
+    p.fs, ...
+    p.window.stim_i, ...
+    p.files.bird_name, ...
+    p.files.save.figure_prefix, ...
+    'BinWidthMs', 5, ...
+    'BreathTraceWindowMs', [-100 200], ...
+    'ImageExtension', p.files.save.fig_extension, ...
+    'ToPlot', p.files.to_plot ...
+);
+
+if verbose 
+    toc(timePlot);
+    disp(['Finished plotting! Saved figures:']);
+    for fig_i=1:length(saved_figs)
+        disp( "  -"  + string(saved_figs{fig_i}) );
+    end
+end
+
+set(groot, 'DefaultFigureVisible','on');  % un-suppress figures
+
