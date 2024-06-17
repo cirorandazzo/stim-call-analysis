@@ -54,6 +54,7 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
         file_list;
         options.filename_labels {iscell} = {};
         options.file_list_type {isstring} = 'dir';
+        options.verbose (1,1) {islogical} = 0;  % TODO: implement verbosity
     end
     
     
@@ -93,12 +94,19 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
         case 'csv_batch'
             mergestructs = @(x,y) cell2struct([struct2cell(x);struct2cell(y)],[fieldnames(x);fieldnames(y)]);  % thank you internet stranger
             files = [];
-            warning('CSV batch files do not look for .rhs files recursively!');
     
             for i_f = 1:length(file_list)
-                new_files = dir(fullfile(file_list(i_f).folder, '*.rhs'));
+                new_files = dir(fullfile(file_list(i_f).folder, '**', '*.rhs'));
             
-                this_labels = rmfield(file_list(i_f), {'folder', 'notes'});
+                to_remove = {'folder', 'notes'};  % todo: make this a general option?
+                this_labels = file_list(i_f);
+                for i_tr = 1:length(to_remove)
+                    try
+                        this_labels = rmfield(this_labels, to_remove{i_tr});
+                    catch error
+                    end
+                end
+
                 n = length(new_files);
             
                 this_labels = repmat(this_labels, [n 1]);
@@ -113,8 +121,8 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
             error(['Unrecognized file_list input type: ' options.file_list_type])
     end
     %%
-    
-    unproc_data = arrayfun(@(x) readIntanWrapper(x, labels, "SuppressOutput"), files);
+
+    unproc_data = arrayfun(@(x) readIntanWrapper(x, labels), files);
     
     %%
     nout = max(nargout, 1) - 1;

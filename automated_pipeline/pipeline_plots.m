@@ -52,13 +52,36 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         options.BreathTraceWindowMs (2,1) {isnumeric} = [-100 200];
         options.ImageExtension = 'svg';
         options.ToPlot = {'exp', 'aud', 'insp', 'breath_trace', 'breath_trace_insp'};
+        options.ConditionFields = {'drug', 'current'};
     end
-
-    if length(data) ~= 1
-        error('Plotting data struct with multiple conditions is not implemented. As a workaround, you can iterate through each row of data struct and run pipeline_plots on each. Sorry about that!');
-    end
-
+    
     saved_figs = {};
+    
+    % With multiple conditions, recursively call pipeline_plots
+    if length(data) > 1
+        % error('Plotting data struct with multiple conditions is not implemented. As a workaround, you can iterate through each row of data struct and run pipeline_plots on each. Sorry about that!');
+        
+        for i_d = 1:length(data)
+            condition_values = cellfun(@(x) data(i_d).(x), options.ConditionFields);
+            condition_string = strjoin(condition_values, '_');
+
+            sub_save_prefix = strcat(save_prefix, condition_string, '-');
+
+            new_figs = pipeline_plots(data(i_d), ...
+                fs, ...
+                stim_i, ...
+                strcat(bird_name, '-', condition_string), ...
+                sub_save_prefix, ...
+                BinWidthMs=options.BinWidthMs, ...
+                BreathTraceWindowMs=options.BreathTraceWindowMs, ...
+                ImageExtension=options.ImageExtension, ...
+                ToPlot=options.ToPlot ...
+             );
+            saved_figs = [saved_figs, new_figs];
+        end
+
+        return
+    end
 
     bin_width = options.BinWidthMs;
     img_ext = options.ImageExtension;
@@ -66,17 +89,19 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
     
     trs_one_call = data.call_seg.one_call;
 
+    bird_name = convertStringsToChars(bird_name);
+
     % EXPIRATORY LATENCY
     if ismember('exp', to_plot)
         exp_latencies = [data.breath_seg.latency_exp];
         exp_latencies = exp_latencies(trs_one_call);
         
         fig = histogram(exp_latencies, 'BinWidth', bin_width);
-        title([bird_name ' expiratory latency (' int2str(length(exp_latencies)) ' calls)']);
+        title([bird_name ' expiratory latency (' int2str(length(exp_latencies)) ')'], 'interpreter', 'none');
         xlabel("Latency to Expiration (ms)");
         ylabel("Count");
 
-        savefile = [save_prefix 'expHist.' img_ext];
+        savefile = strcat(save_prefix, ['expHist.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
         close;
@@ -89,11 +114,11 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         insp_latencies = insp_latencies(trs_one_call);
 
         fig = histogram(insp_latencies, 'BinWidth', bin_width);
-        title([bird_name ' inspiratory latency (' int2str(length(insp_latencies)) ' calls)']);
+        title([bird_name ' inspiratory latency (' int2str(length(insp_latencies)) ')'], 'interpreter', 'none');
         xlabel("Latency to Inspiration (ms)");
         ylabel("Count");
 
-        savefile = [save_prefix 'inspHist.' img_ext];
+        savefile = strcat(save_prefix, ['inspHist.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
         close;
@@ -104,12 +129,12 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         call_latencies = [data.call_seg.acoustic_features.latencies{:}];
 
         fig = histogram(call_latencies, 'BinWidth', bin_width);
-        title([bird_name ' audio latency (' int2str(length(trs_one_call)) ')']);
+        title([bird_name ' audio latency (' int2str(length(trs_one_call)) ')'], 'interpreter', 'none');
         xlabel("Latency to Call (ms)");
         ylabel("Count");
         % xlim([40 180]);
 
-        savefile = [save_prefix 'audHist.' img_ext];
+        savefile = strcat(save_prefix, ['audHist.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
         close;
@@ -120,7 +145,7 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         fig = figure;
         hold on;
 
-        title([bird_name ' breath traces (' int2str(length(trs_one_call)) ')']);
+        title([bird_name ' breath traces (' int2str(length(trs_one_call)) ')'], 'interpreter', 'none');
         xlabel('Time since stim (ms)')
         ylabel('Pressure')
         
@@ -137,7 +162,7 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         
         xlim(options.BreathTraceWindowMs);
 
-        savefile = [save_prefix 'breathTraces.' img_ext];
+        savefile = strcat(save_prefix, ['breathTraces.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
 
@@ -150,7 +175,7 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         fig = figure;
         hold on;
 
-        title([bird_name ' breath traces (' int2str(length(trs_one_call)) ')']);
+        title([bird_name ' breath traces (' int2str(length(trs_one_call)) ')'], 'interpreter', 'none');
         xlabel('Time since stim (ms)')
         ylabel('Pressure')
         
@@ -177,7 +202,7 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         
         xlim(options.BreathTraceWindowMs);  
 
-        savefile = [save_prefix 'breathTracesInsp.' img_ext];
+        savefile = strcat(save_prefix, ['breathTracesInsp.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
 

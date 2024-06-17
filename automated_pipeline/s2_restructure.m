@@ -131,27 +131,29 @@ function [breathing, breathing_filt, audio] ...
 
     data_stim_dig = data_stim>=1;  % some birds have analog stim_ii data
     
-    % == get stim_ii onsets (frame in data_stim) ==
+    % == get stim onsets (frame in data_stim) ==
     stim_ii = find(data_stim_dig == 1);  % indices where stim_ii is occuring.
     stim_ii(stim_ii==1) = [];  % ignore stim_ii at very start of data. breaks next statement
-
-    stim_t = stim_ii(~any(data_stim_dig(max(1, stim_ii-stim_cooldown_fr):stim_ii-1) == 1) );  % ensure another stim_ii does not occur in 'stim_cooldown_fr' frames before
+    
+    % ensure another stim_ii does not occur in 'stim_cooldown_fr' frames before
+    check_onset = arrayfun(@(i) ~any(data_stim_dig(max(1, i-stim_cooldown_fr) : i-1) >= 1), stim_ii);
+    stim_ii = stim_ii(check_onset);
 
     r_fr = trial_radius_s * fs;  % num of frames to take before/after stim
     l_window = 2*r_fr+1;
 
-    stim_t = getGoodStims(stim_t, r_fr, length(data_breathing));
+    stim_ii = getGoodStims(stim_ii, r_fr, length(data_breathing));
    
     % == preallocate for speed ==
-    z = zeros([length(stim_t) l_window]);  % vector length l_window per trial
+    z = zeros([length(stim_ii) l_window]);  % vector length l_window per trial
     breathing = z;
     breathing_filt = z;
     audio = z;
 
-    for j = length(stim_t):-1:1  % for each stimulation
+    for j = length(stim_ii):-1:1  % for each stimulation
         % start and end frames of windows in data_stim
-        s = stim_t(j) - r_fr;
-        e = stim_t(j) + r_fr;
+        s = stim_ii(j) - r_fr;
+        e = stim_ii(j) + r_fr;
 
         % cut & filter data
         breathing(j,:) = data_breathing(s:e);

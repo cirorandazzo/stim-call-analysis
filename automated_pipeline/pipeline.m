@@ -31,7 +31,7 @@ end
 [root, name, ext] = fileparts(p.files.raw_data);
 
 if isempty(ext)  % DIRECTORY, read all .rhs files
-    file_list = dir(fullfile(data_dir, ['**' filesep '*.rhs']));  % get all intan rhs files
+    file_list = dir(fullfile(p.files.raw_data, ['**' filesep '*.rhs']));  % get all intan rhs files
     
     if ~isfield(p.files, 'labels')
         % format curr_freq_len_sth_sth.rhs -- eg '20uA_100Hz_50ms_230725_143022.rhs'
@@ -39,12 +39,17 @@ if isempty(ext)  % DIRECTORY, read all .rhs files
         p.files.labels = {}; % CDR 2024.06.04 - don't presume labels if not given.
     end
 
-    [unproc_data, labels] = s1_load_raw(file_list, filename_labels=p.files.labels);
+    [unproc_data, parameter_names] = s1_load_raw(file_list, filename_labels=p.files.labels);
 
 elseif strcmpi(ext, '.csv')  % .csv batch specifying parameters & rhs folder names
-    files = table2struct(readtable(p.files.raw_data));
+    opts = detectImportOptions(p.files.raw_data);
+    opts = setvartype(opts, opts.VariableNames, 'char');  
+    opts = setvaropts(opts, 'FillValue', '');
 
-    [unproc_data, labels] = s1_load_raw(files, file_list_type='csv_batch');
+    files = table2struct(readtable(p.files.raw_data, opts));
+    assert(~isempty(files));
+
+    [unproc_data, parameter_names] = s1_load_raw(files, file_list_type='csv_batch');
 
 elseif strcmpi(ext, '.mat')  % preprocessed .mat file 
     load(p.files.raw_data, 'dataMat');
@@ -54,9 +59,9 @@ elseif strcmpi(ext, '.mat')  % preprocessed .mat file
     clear dataMat;
 
     if isfield(p.files, 'labels')
-        labels = p.files.labels;
+        parameter_names = p.files.labels;
     else
-        labels = {};
+        parameter_names = {};
     end
     unproc_data = renameStructField(unproc_data, 'audio', 'sound');
     unproc_data.fs = p.fs;

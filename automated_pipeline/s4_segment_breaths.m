@@ -116,6 +116,9 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
             breath_seg_data_cond(tr).exps_peri = exps(exps >= (stim_i - stim_window_pre_fr) & exps <= (stim_i + stim_window_post_fr));
             breath_seg_data_cond(tr).insps_peri = insps(insps >= (stim_i - stim_window_pre_fr) & insps <= (stim_i + stim_window_post_fr));
     
+            % inspiratory amplitude. within same window as looking for insp onset
+            breath_seg_data_cond(tr).insp_amplitude = min( centered(stim_i : stim_i+insp_dur_max_f) );
+
             % exp
             latency_exp = (breath_seg_data_cond(tr).exps_post(1) - stim_i) * 1000 / fs;
             breath_seg_data_cond(tr).latency_exp = latency_exp;
