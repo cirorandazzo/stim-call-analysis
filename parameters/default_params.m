@@ -3,10 +3,18 @@ function p = default_params(p)
 % WARNING: will overwrite whatever's passed in, so make sure to make edits after calling default_params in a script.
 
 % p.files.delete_fields = {'current', 'length', 'frequency', 'amplitude', 'breathing', 'breathing_filt', 'audio', 'audio_filt'};
-p.files.delete_fields = {'current', 'length', 'frequency', 'amplitude'};
+% p.files.delete_fields = {'current', 'length', 'frequency', 'amplitude'};
+p.files.delete_fields = {};
 
-p.files.save_folder = ['./data/processed/' p.files.group '/' p.files.bird_name ];
-p.files.save.save_prefix = [p.files.save_folder '/' p.files.bird_name];
+if ~isfield(p.files, 'group')
+    p.files.group = [];
+end
+    
+if ~isfield(p.files, 'savefolder')
+    p.files.save_folder = fullfile('.', 'data', 'processed', p.files.group, p.files.bird_name);
+end
+
+p.files.save.save_prefix = fullfile(p.files.save_folder, p.files.bird_name);
 
 %--save files
 % empty array to skip saving
@@ -19,10 +27,10 @@ p.files.save.parameter_save_file = [p.files.save.save_prefix '-parameters.mat'];
 p.files.save.breathing_audio_save_file = [];  % savefile for breathing & audio separately without analyzed data
 
 
-p.files.figure_folder = ['./data/figures/' p.files.group ];
+p.files.figure_folder = fullfile('.', 'data', 'figures', p.files.group, p.files.bird_name);
 
 p.files.to_plot = {'exp', 'aud', 'insp', 'breath_trace', 'breath_trace_insp'};  % figure types to plot for this bird (see `./automated_pipeline/plot`)
-p.files.save.figure_prefix = [p.files.figure_folder '/' p.files.bird_name '-'];  % filename prefix to save figures for this bird
+p.files.save.figure_prefix = [fullfile(p.files.figure_folder, p.files.bird_name) '-'];  % filename prefix to save figures for this bird
 p.files.save.fig_extension = 'svg';
 
 %--windowing
