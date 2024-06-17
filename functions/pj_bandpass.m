@@ -31,11 +31,11 @@ end
 %   disp ('filtsong is too short, modify parameters in bandpass.m')
 %end 
  
-v=version;
-if str2num(v(1)) < 5
-  disp(['warning! bandpass: filtering is lousy with mlab version < 5.xx'])
-  disp(['current version = ',v]);
-end     
+% v=version;
+% if str2num(v(1)) < 5
+%   disp(['warning! bandpass: filtering is lousy with mlab version < 5.xx'])
+%   disp(['current version = ',v]);
+% end     
 
 %filter song with fir1/filtfilt
 %	song_filt = fir1(nfilt,[F_low*2/Fs, F_high*2/Fs]);
