@@ -6,8 +6,7 @@
 
 
 %--files
-p.files.raw_data = './data/dm/DMStim_080720.mat';
-mat_file = true;
+p.files.raw_data = 'F:\ziggy\stim_data-20240604\dm\DMStim_080720.mat';
 
 p.files.bird_name = '080720';
 p.files.group = 'dm';

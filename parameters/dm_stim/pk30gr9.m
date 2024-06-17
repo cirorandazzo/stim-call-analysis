@@ -4,8 +4,7 @@
 
 
 %--files
-p.files.raw_data = './data/dm/DMStim_pk30gr9.mat';
-mat_file = true;
+p.files.raw_data = 'F:\ziggy\stim_data-20240604\dm\DMStim_pk30gr9.mat';
 
 p.files.bird_name = 'pk30gr9';
 p.files.group = 'dm';

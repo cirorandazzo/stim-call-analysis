@@ -3,8 +3,7 @@
 % saving/loading parameters
 
 %--files
-p.files.raw_data = './data/pam/bu26bu73';
-mat_file = 0;
+p.files.raw_data = 'F:\ziggy\stim_data-20240604\pam\bu26bu73';
 
 p.files.bird_name = 'bu26bu73';
 p.files.group = 'pam';
