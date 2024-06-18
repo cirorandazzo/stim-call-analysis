@@ -15,6 +15,11 @@ p = default_params(p);
 
 %--call segmentation options
 % defaults neglect some low-amplitude calls
-p.call_seg.q = 4;  % threshold = p.call_seg.q*MEDIAN
-p.call_seg.min_interval_ms = 30;  % ms; minimum time between 2 notes to be considered separate notes (else merged)
-p.call_seg.min_duration_ms = 10;  % ms; minimum duration of note to be considered (else ignored)
+p.call_seg.q = 2.6;  % threshold = p.call_seg.q*MEDIAN
+p.call_seg.min_interval_ms = 5;  % was 30ms; minimum time between 2 notes to be considered separate notes (else merged)
+p.call_seg.min_duration_ms = 7;  % ms; minimum duration of note to be considered (else ignored)
+
+%--breath segmentation
+p.breath_seg.min_duration_fr = 10 * p.fs / 1000;
+p.breath_seg.exp_thresh = 0.01;
+p.breath_seg.insp_thresh = -0.03;
