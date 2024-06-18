@@ -16,23 +16,6 @@ overlap = 1020;
 f_low = 500;
 f_high = 15000;
 
-
-%%
-close all
-
-delete(gcp('nocreate'));
-parpool(5);
-
-save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\spectrograms";
-mkdir(save_root)
-
-ext = '.jpeg';
-skip_existing = true;
-save_wav = true;
-xl = [1450 2000];  % ms. not zeroed on stimulus.
-
-spec_threshold = 1.25e-2; % determined manually; see spectrogram_thresholding.m
-
 data_files = {
     "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\bu69bu75\bu69bu75-data.mat"
     "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pk15\pk15-data.mat"
@@ -41,8 +24,23 @@ data_files = {
     "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pu65bk36\pu65bk36-data.mat"
 };
 
+save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\spectrograms";
+
+ext = '.jpeg';
+skip_existing = true;
+save_wav = true;
+xl = [1450 2000];  % ms. not zeroed on stimulus.
+
+spec_threshold = 1.25e-2; % determined manually; see spectrogram_thresholding.m
+
 call_count_cats = {'one_call', 'no_calls', 'multi_calls'};
 
+%%
+close all
+mkdir(save_root)
+
+delete(gcp('nocreate'));
+parpool(5);
 set(groot, 'DefaultFigureVisible','off');  % suppress figures
 
 parfor i_df = 1:length(data_files)
@@ -58,6 +56,7 @@ parfor i_df = 1:length(data_files)
         cond_string = strcat(bird_name, '-', data(i_c).drug, '_', data(i_c).current);
         
         for i_ccc = 1:length(call_count_cats)
+        % parfor i_ccc = 1:length(call_count_cats)  % replace top-level parfor with this one if only plotting for 1 bird
             disp(strcat('Plotting: ', cond_string, ', ', call_count_cats{i_ccc}))
             tic
             trs = data(i_c).call_seg.(call_count_cats{i_ccc});
@@ -91,49 +90,39 @@ parfor i_df = 1:length(data_files)
 
                 clf(fig)
 
-                % plot rectified audio
+                %% plot rectified audio
                 ax1 = subplot(3,1,1);
 
                 subtitle("tr " + string(tr));
                 title(cond_string, 'Interpreter','none');
 
                 hold on
+                % audio
                 a_filt = data_ic.audio_filt(tr, :);
                 y_min = min(a_filt, [], 'all');
                 y_max = max(a_filt, [], 'all');
-
                 plot(x , a_filt)
-                a_filt = [];
-
-                % add horizontal threshold line
+                % call lines
+                addCallLinesToPlot(onsets, offsets, [y_min y_max])
+                % stimulus
+                plot([stim_i stim_i] * 1000/fs, [0 y_max], Color='k', LineStyle='--', LineWidth=1);
+                % threshold
                 thr = data_ic.call_seg.noise_thresholds(tr);
                 plot([x(1) x(end)], [thr thr], LineStyle='--', Color='k')
 
+                a_filt = [];
                 ylim([0 thr*2]);
-
-                % add onset/offset lines
-                colors = autumn(length(offsets));
-                for j=1:length(offsets)
-                    onset = onsets(j);
-                    offset = offsets(j);
-                    color = colors(j, :);
-                    w = 1;  % linewidth
-
-                    plot([onset onset], [y_min y_max], 'Color', color, 'LineWidth', w, 'LineStyle', '-');
-                    plot([offset offset], [y_min y_max], 'Color', color, 'LineWidth', w, 'LineStyle', '-');
-                end
-
                 hold off
 
+                %% plot spectrogram
                 ax2 = subplot(3,1,[2,3]);
-
-                plotSpectrCallLines(data_ic.audio(tr,:), onsets, offsets, fs, spec_threshold, n , overlap, f_low, f_high);
                 hold on;
+                plotSpectrCallLines(data_ic.audio(tr,:), onsets, offsets, fs, spec_threshold, n , overlap, f_low, f_high);
                 plot([stim_i stim_i] * 1000/fs, [0 f_high], Color='k', LineStyle='--', LineWidth=1);
                 hold off;
                 ylim([f_low f_high])
 
-
+                %% link xaxes & save figure/wav
                 linkaxes([ax2 ax1], 'x')
                 xlim(xl);
                 
@@ -147,7 +136,8 @@ parfor i_df = 1:length(data_files)
             toc  % time elapsed for this condition + call_count
         end
 
-        get(groot, 'Children')
+        % get(groot, 'Children')  % prints number of figures currently
+        % open, helpful for debugging memory leak
     end
 
     close all hidden;

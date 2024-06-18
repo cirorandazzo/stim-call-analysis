@@ -3,9 +3,9 @@
 % 
 % Show spectrogram labeled with segmented calls for selected trial(s).
 
-% LOAD DATA STRUCT.
+% LOAD 1d DATA STRUCT.
 
-trs=[8];
+trs=[71];
 
 % % for spontaneous data (rec with evtaf)
 % fs = 32000;
@@ -20,14 +20,13 @@ n = 1024;
 overlap = 1020;
 
 f_low = 500;
-f_high = 10000;
+f_high = 15000;
 
-spec_threshold = 0; % determined manually; see spectrogram_thresholding.m
+spec_threshold = 0.01; % determined manually; see spectrogram_thresholding.m
 
 
 %%
-% close all
-figure
+close all
 for j=1:length(trs)
     figure;
 
