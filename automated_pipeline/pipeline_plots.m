@@ -16,9 +16,9 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
 %  NOTE: not currently implemented for multiple conditions; will throw error
 % 
 % INPUTS:
-%     data:     A structure containing processed data for a single bird. It 
-%               should include information such as breath segment latencies, 
-%               acoustic features, and breathing traces.
+%     data:     A struct containing processed data, including 
+%               breathing latencies, acoustic features, breath traces. If
+%               struct has >1 row, recursively plots rows. 
 %     fs:       Sampling frequency of the data.
 %     stim_i:   Frame index of the stimulation in each trial (usually exact 
 %               halfway point).
@@ -88,6 +88,11 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
     to_plot = options.ToPlot;
     
     trs_one_call = data.call_seg.one_call;
+    
+    if isempty(trs_one_call)
+        warning('No one-call trials found for this bird/condition.')
+        return
+    end
 
     bird_name = convertStringsToChars(bird_name);
 
@@ -126,7 +131,7 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
 
     % AUDIO-SEGMENTED CALL LATENCY
     if ismember('aud', to_plot)
-        call_latencies = [data.call_seg.acoustic_features.latencies{:}];
+        call_latencies = [data.call_seg.acoustic_features.latencies];
 
         fig = histogram(call_latencies, 'BinWidth', bin_width);
         title([bird_name ' audio latency (' int2str(length(trs_one_call)) ')'], 'interpreter', 'none');

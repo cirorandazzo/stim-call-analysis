@@ -138,8 +138,11 @@ for c=length(proc_data):-1:1  % for each condition
 
         proc_data(c).call_seg.acoustic_features.latencies = arrayfun( ...
             @(tr) (call_onsets{tr} - stim_i) * 1000 / fs, ...
-            proc_data(c).call_seg.one_call, ...
-            'UniformOutput',false);
+            proc_data(c).call_seg.one_call);
+    else  % save empty so other code works
+        proc_data(c).call_seg.acoustic_features = getAcousticFeatures( ...
+            {}, fs);
+        proc_data(c).call_seg.acoustic_features.latencies = [];
     end
 
     % Save processing parameters
@@ -217,8 +220,6 @@ function features = getAcousticFeatures(audio_calls, fs)
 % - fma
 % - amplitude of fma
 % - spectral entropy
-    
-    features = [];
     
     % call duration in ms
     features.duration = cellfun(@(tr) length(tr)*1000/fs, audio_calls);
