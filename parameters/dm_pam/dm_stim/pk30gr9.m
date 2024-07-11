@@ -13,3 +13,7 @@ p.fs = 30000;
 
 p = default_params(p);
 
+%--call segmentation options
+p.call_seg.q = 3;  % threshold = p.call_seg.q*MEDIAN
+p.call_seg.min_interval_ms = 40;  % ms; minimum time between 2 notes to be considered separate notes (else merged)
+p.call_seg.min_duration_ms = 10;  % ms; minimum duration of note to be considered (else ignored)
