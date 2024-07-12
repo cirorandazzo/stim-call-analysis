@@ -31,8 +31,16 @@ function data = readIntanWrapper(x, parameter_names, options)
 
     data.fs         = c.frequency_parameters.amplifier_sample_rate;
     data.sound      = c.board_adc_data(1, :);
-    data.stim       = c.board_dig_in_data; %stim_data(stimChan, :);  % error here might occur bc there are 2 channels
     data.breathing  = c.board_adc_data(2, :);
     data.file       = x;
+
+    if isfield(c, 'board_dig_in_data')
+        data.stim = c.board_dig_in_data; %stim_data(stimChan, :);  % error here might occur bc there are 2 channels
+    elseif isfield(c, 'amp_settle_data')
+        data.stim = c.amp_settle_data(1,:);
+    else
+        error('Could not find stim data.')
+    end
+
 end
 

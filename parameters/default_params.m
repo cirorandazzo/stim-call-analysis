@@ -24,7 +24,7 @@ p.files.save.call_seg_save_file = [];
 p.files.save.call_breath_seg_save_file = [p.files.save.save_prefix '-data.mat'];
 p.files.save.parameter_save_file = [p.files.save.save_prefix '-parameters.mat'];
 % p.files.save.breathing_audio_save_file = [p.files.save.save_prefix '-breathing_audio.mat'];  % savefile for breathing & audio separately without analyzed data
-p.files.save.breathing_audio_save_file = [];  % savefile for breathing & audio separately without analyzed data
+p.files.save.breathing_audio_save_file = [p.files.save_folder '-breathing_audio.mat'];  % savefile for breathing & audio separately without analyzed data
 
 
 p.files.figure_folder = fullfile('.', 'data', 'figures', p.files.group, p.files.bird_name);

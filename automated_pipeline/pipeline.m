@@ -21,6 +21,10 @@ if ~exist("verbose", "var")
     verbose=true;
 end
 
+if ~exist("do_plots", "var")
+    do_plots=true;
+end
+
 %% STEP 1: load intan data
 
 if verbose 
@@ -165,7 +169,8 @@ call_breath_seg_data = s4_segment_breaths( ...
     p.breath_seg.stim_window.pre_stim_ms, ...
     p.breath_seg.stim_window.post_stim_ms, ...
     p.breath_seg.derivative_smooth_window_ms, ...
-    p.breath_seg.stim_induced_insp_window_ms ...
+    p.breath_seg.stim_induced_insp_window_ms, ...
+    p.call_seg.post_stim_call_window_ii...
 );
 
 clear call_seg_data;
@@ -185,15 +190,31 @@ clear call_breath_seg_data;
 
 %% SAVE BREATHING & AUDIO
 if ~isempty(p.files.save.breathing_audio_save_file)
-    to_keep = {'breathing', 'breathing_filt', 'audio', 'audio_filt'};
-    
+    to_keep = {
+        'audio', 'audio_filt'...  % audio stuff
+        'breathing', 'breathing_filt', 'breathing_centered'...  % breathing stuff
+        'surgery_condition', 'drug'...  % pharmacology parameters
+        };
+    if ismember('breathing_centered', to_keep)
+        centered = arrayfun( ...
+            @(x) vertcat(x.breath_seg.centered), ...
+            data, ...
+            UniformOutput=false ...
+            );
+    end
+
     fields = fieldnames(data); 
     to_rm = fields(~ismember(fields, to_keep));
 
     breathing_audio_data = rmfield(data, to_rm);
+    [breathing_audio_data.breathing_centered] = centered{:};
+
+    [breathing_audio_data.stim_i] = deal(p.window.stim_i);
+    [breathing_audio_data.fs] = deal(p.fs);
+    
 
     save(p.files.save.breathing_audio_save_file, "breathing_audio_data");
-    clear breathing_audio_data;
+    clear breathing_audio_data centered;
 end
 
 %% SAVE PARAMETERS
@@ -208,30 +229,34 @@ end
 
 %% PLOT FIGURES
 
-if verbose 
-    disp('Plotting...');
-    timePlot = tic;
-end
+if do_plots
 
-saved_figs = pipeline_plots( ...
-    data, ...
-    p.fs, ...
-    p.window.stim_i, ...
-    p.files.bird_name, ...
-    p.files.save.figure_prefix, ...
-    'BinWidthMs', 5, ...
-    'BreathTraceWindowMs', [-100 200], ...
-    'ImageExtension', p.files.save.fig_extension, ...
-    'ToPlot', p.files.to_plot ...
-);
-
-if verbose 
-    toc(timePlot);
-    disp(['Finished plotting! Saved figures:']);
-    for fig_i=1:length(saved_figs)
-        disp( "  -"  + string(saved_figs{fig_i}) );
+    if verbose 
+        disp('Plotting...');
+        timePlot = tic;
     end
-end
+    
+    saved_figs = pipeline_plots( ...
+        data, ...
+        p.fs, ...
+        p.window.stim_i, ...
+        p.files.bird_name, ...
+        p.files.save.figure_prefix, ...
+        'BinWidthMs', 5, ...
+        'BreathTraceWindowMs', [-100 200], ...
+        'ImageExtension', p.files.save.fig_extension, ...
+        'ToPlot', p.files.to_plot ...
+    );
+    
+    if verbose 
+        toc(timePlot);
+        disp(['Finished plotting! Saved figures:']);
+        for fig_i=1:length(saved_figs)
+            disp( "  -"  + string(saved_figs{fig_i}) );
+        end
+    end
+    
+    set(groot, 'DefaultFigureVisible','on');  % un-suppress figures
 
-set(groot, 'DefaultFigureVisible','on');  % un-suppress figures
+end
 

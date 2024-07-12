@@ -42,7 +42,7 @@ for pfile_i = length(parameter_files):-1:1
     clearvars -except save_root fig_ext parameter_files current_dir pfile_i distributions
 end
 
-distributions = orderfields(distributions, [7 9 8 1:6]);
+distributions = orderfields(distributions, [14 16 15 6 1:5 7:13]);
 save(fullfile(save_root, 'distributions.mat'), "distributions");
 
 set(groot, 'DefaultFigureVisible', 'on');
@@ -71,23 +71,47 @@ close all
 normalize = false;
 
 fields_to_plot = {
+    'insp_latency'    
     'exp_latency'
-    'insp_latency'
     'call_latency'
     'insp_amplitude'
+    'exp_amplitude'
     'audio_amplitude'
+    'call_success_rate'
+    'all_stims.insp_amplitude'
+    'all_stims.exp_amplitude'
+    'all_stims.latency_exp'
 };
 
 ylabels = {
-    'Expiratory latency (s)'
-    'Inspiratory latency (s)'
-    'Audio-segmented call latency (s)'
-    'Inspiratory amplitude'
+    'Inspiratory latency (ms)'
+    'Expiratory latency (ms)'
+    'Audio-segmented call latency (ms)'
+    'Inspiratory amplitude (normalized)'
+    'Expiratory amplitude (normalized)'
     'Audio amplitude'
+    'Evoked call success rate (% of stimulations)'
+    'Inspiratory amplitude (normalized)'
+    'Expiratory amplitude (normalized)'
+    'Expiratory latency (ms)'
+};
+
+ylims = {
+    [0 35] % 'Inspiratory latency (s)'
+    [0 180] % 'Expiratory latency (s)'
+    [0 200] % 'Audio-segmented call latency (s)'
+    [0 6] % 'Inspiratory amplitude'
+    [0 inf] % 'Expiratory amplitude'
+    [0 inf] % 'Audio amplitude'
+    [0 1] % 'Evoked call success rate (% of stimulations)'
+    [0 6] % all stims 'Inspiratory amplitude'
+    [0 16] % all stims 'Expiratory amplitude'
+    [0 250] % all stims 'Expiratory latency'
 };
 
 for i_ftp = 1:length(fields_to_plot)
     field_to_plot = fields_to_plot{i_ftp};
+    field_to_plot_split = regexp(field_to_plot,'\.','split');
 
     fig = figure;
     hold on;
@@ -109,7 +133,11 @@ for i_ftp = 1:length(fields_to_plot)
         i_bl = matches([this_bird.condition], bl_pattern, IgnoreCase=true);
         i_drug = matches([this_bird.condition], drug_pattern, IgnoreCase=true);
         
-        data = {this_bird(i_bl).(field_to_plot) this_bird(i_drug).(field_to_plot)};
+        % data = {this_bird(i_bl).(field_to_plot) this_bird(i_drug).(field_to_plot)};
+        data = {
+            getfield(this_bird(i_bl), field_to_plot_split{:})
+            getfield(this_bird(i_drug), field_to_plot_split{:});
+        };
         data = cellfun(@median, data);
 
         if normalize
@@ -131,6 +159,8 @@ for i_ftp = 1:length(fields_to_plot)
     xticks([1 2])
     xticklabels(["baseline", "drug"])
 
+    ylim(ylims{i_ftp})
+
     if normalize
         ylabel('Normalized change');
     else
@@ -140,9 +170,9 @@ for i_ftp = 1:length(fields_to_plot)
     legend(Location='northwest');
     hold off;
 
-    fig_fname = fullfile(save_root, append(field_to_plot, '-pre_post_normd-', fig_ext));
+    fig_fname = fullfile(save_root, append(field_to_plot, '-pre_post', fig_ext));
 
-    % saveas(fig, fig_fname)
+    saveas(fig, fig_fname)
 end
 %%
 

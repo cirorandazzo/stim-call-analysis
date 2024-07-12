@@ -1,6 +1,6 @@
 function [call_breath_seg_data] = s4_segment_breaths(...
     call_seg_data, fs, stim_i, dur_thresh, exp_thresh, insp_thresh, ...
-    stim_window_pre_ms, stim_window_post_ms, smooth_window, insp_dur_max_ms)
+    stim_window_pre_ms, stim_window_post_ms, smooth_window, insp_dur_max_ms, exp_amp_window_fr)
 % S3_SEGMENT_BREATHS
 % 2024.02.13 CDR based on code from ZK
 % 
@@ -33,6 +33,8 @@ function [call_breath_seg_data] = s4_segment_breaths(...
 %       Size of the smoothing window to be used in inspiration derivative calculations.
 %   insp_dur_max_ms:
 %       Maximum time (ms) after stimulation to look for inspiration
+%   exp_amp_window_fr:
+%       Start & end of window to look for expiratory amplitude (in frames; 1==trial start)
 %
 % OUTPUT
 %   call_breath_seg_data:
@@ -59,7 +61,7 @@ breath_seg_data = cell( size(breathing) );
 for i=1:length(breathing) % run for each condition separately (see local helper function segment_each_cond)
     x = breathing{i};
     breath_seg_data{i} = segmentEachCondition(x, stim_i, fs, dur_thresh, ...
-        exp_thresh, insp_thresh, stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms);
+        exp_thresh, insp_thresh, stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms, exp_amp_window_fr);
 end
 
 call_breath_seg_data = call_seg_data;
@@ -72,13 +74,16 @@ end
 
 function [breath_seg_data_cond] = segmentEachCondition( ...
     breathing, stim_i, fs, dur_thresh, exp_thresh, insp_thresh, ...
-    stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms)
+    stim_window_pre_fr, stim_window_post_fr, smooth_window, insp_dur_max_ms, ...
+    exp_amp_window_fr)
 % LOCAL HELPER FUNCTION    
 % for all breathing data in given condition, run segmentation code trial by
 % trial
     breath_seg_data_cond = [];
 
     insp_dur_max_f = insp_dur_max_ms * fs / 1000;
+
+    pre_stim_amp_normalize_window = [-0.5 0] * fs + stim_i;  % TODO: make parameter. pre-stim window to normalize 
 
 
     for tr = size(breathing, 1):-1:1
@@ -110,6 +115,7 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
             breath_seg_data_cond(tr).exps_pre = exps(exps < (stim_i - stim_window_pre_fr));
             breath_seg_data_cond(tr).insps_pre = insps(insps < (stim_i - stim_window_pre_fr));
         
+            % post & peri should probably not be separated...
             breath_seg_data_cond(tr).exps_post = exps(exps > (stim_i + stim_window_post_fr));
             breath_seg_data_cond(tr).insps_post = insps(insps > (stim_i + stim_window_post_fr));
             
@@ -117,9 +123,18 @@ function [breath_seg_data_cond] = segmentEachCondition( ...
             breath_seg_data_cond(tr).insps_peri = insps(insps >= (stim_i - stim_window_pre_fr) & insps <= (stim_i + stim_window_post_fr));
     
             % inspiratory amplitude. within same window as looking for insp onset
-            breath_seg_data_cond(tr).insp_amplitude = min( centered(stim_i : stim_i+insp_dur_max_f) );
+            pre_window = centered(pre_stim_amp_normalize_window(1) : pre_stim_amp_normalize_window(2) );
 
-            % exp
+            pre_stim_min = min(pre_window);
+            post_stim_min = min( centered(stim_i : stim_i+insp_dur_max_f) );
+            breath_seg_data_cond(tr).insp_amplitude = post_stim_min / pre_stim_min;
+
+            % expiratory amplitude
+            pre_stim_max = max(pre_window);
+            post_stim_max = max( centered(exp_amp_window_fr(1): exp_amp_window_fr(2)) );
+            breath_seg_data_cond(tr).exp_amplitude = post_stim_max / pre_stim_max;
+
+            % expiratory latency 
             latency_exp = (breath_seg_data_cond(tr).exps_post(1) - stim_i) * 1000 / fs;
             breath_seg_data_cond(tr).latency_exp = latency_exp;
 

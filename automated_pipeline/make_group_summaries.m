@@ -52,6 +52,9 @@ function summary_group = make_group_summaries(summary_bird)
         
         summary_group(i_group).birds = {this_group.bird};
 
+        % call success rate
+        summary_group(i_group).call_success_rate = [this_group.call_success_rate];
+
         % assert that everything has the right length
         assert(summary_group(i_group).n_calls == length(summary_group(i_group).insp_latencies));
         assert(summary_group(i_group).n_calls == length(summary_group(i_group).audio_latencies));
