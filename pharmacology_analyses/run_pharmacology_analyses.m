@@ -192,6 +192,11 @@ end
 %% run stats
 
 p_vals = struct('comparison', {comparison_struct.comparison});
+summary_stats_baseline = p_vals;
+summary_stats_drug = p_vals;
+
+[summary_stats_baseline.condition] = deal('baseline');
+[summary_stats_drug.condition] = deal('drug');
 
 for i_cond = 1:length(comparison_struct)
     assert( strcmp(p_vals(i_cond).comparison, comparison_struct(i_cond).comparison) )
@@ -202,14 +207,20 @@ for i_cond = 1:length(comparison_struct)
     for i_fn = 1:length(fields)
         this_field = this_cond.(fields{i_fn});
         p_vals(i_cond).(fields{i_fn}) = signrank(this_field.baseline, this_field.drug);
+
+        summary_stats_baseline(i_cond).(fields{i_fn}) = make_stat_summary(this_field.baseline);
+        summary_stats_drug(i_cond).(fields{i_fn}) = make_stat_summary(this_field.drug);
     end
 end
-clear this_field this_cond fields
 
+summary_stats = [summary_stats_baseline summary_stats_drug];
+% sort nicely
+[~,index] = sortrows({summary_stats.comparison}.'); summary_stats = summary_stats(index); clear index
 
-%%
-save(fullfile(save_root, 'distributions.mat'), ...
-    "distributions", "summary_stats", "comparison_struct", "p_vals");
+clear this_field this_cond fields summary_stats_baseline summary_stats_drug
+
+save(fullfile(save_root, 'pharmacology-stats.mat'), ...
+    "distributions", "summary_stats", "comparison_struct", "p_vals", "summary_stats");
 
 %%
 

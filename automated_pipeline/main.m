@@ -343,7 +343,7 @@ call_only_fields = [
 [p_vals_all_stims, stats_all_stims, distrs_all_stims] = get_stats_dm_pam(summary_all_stims, all_stim_fields);
 [p_vals_calls, stats_calls, distrs_calls] = get_stats_dm_pam(summary_bird, call_only_fields);
 
-fname=fullfile(group_figure_save_folder, 'summaries_stats.mat');
+fname=fullfile(group_figure_save_folder, 'dmpam-summaries_stats.mat');
         
 save(fname, ...
     ...STAT STRUCTS
