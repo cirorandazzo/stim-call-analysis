@@ -326,3 +326,30 @@ if do_group_plots  % note: automatically set to false if any data structs have >
 
     clear i_ftp field fig fig_fname
 end
+
+%% group comparison statistics
+
+all_stim_fields = [
+    "exp_amplitude"
+    "insp_amplitude"
+    "latency_exp"
+    ];
+
+call_only_fields = [
+  "call_success_rate"
+  "median_insp_lat"
+];
+
+[p_vals_all_stims, stats_all_stims, distrs_all_stims] = get_stats_dm_pam(summary_all_stims, all_stim_fields);
+[p_vals_calls, stats_calls, distrs_calls] = get_stats_dm_pam(summary_bird, call_only_fields);
+
+fname=fullfile(group_figure_save_folder, 'summaries_stats.mat');
+        
+save(fname, ...
+    ...STAT STRUCTS
+    'p_vals_all_stims', 'stats_all_stims', 'distrs_all_stims', ...
+    'p_vals_calls', 'stats_calls', 'distrs_calls', ...
+    ...AND SUMMARY STRUCTS
+    'summary_group', 'summary_all_stims', 'summary_bird', ...
+    'summary_bird_exclusions'...
+    );

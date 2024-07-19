@@ -255,14 +255,6 @@ function statistics = get_summary_stats(distr, options)
 
 end
 
-function stat_summary = make_stat_summary(verified_distr)
-
-    stat_summary.median = median(verified_distr);
-    stat_summary.mean = mean(verified_distr);
-    stat_summary.std = std(verified_distr);
-
-end
-
 function distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext)
 
     % load processed data
