@@ -16,6 +16,7 @@ parameter_files = dir( fullfile( param_file_folder, ['**' filesep '*.m']) );
 
 current_dir = cd;
 
+%%
 set(groot, 'DefaultFigureVisible', 'off')
 distributions = [];
 for pfile_i = length(parameter_files):-1:1
@@ -43,7 +44,11 @@ for pfile_i = length(parameter_files):-1:1
 end
 
 distributions = orderfields(distributions, [14 16 15 6 1:5 7:13]);
-save(fullfile(save_root, 'distributions.mat'), "distributions");
+
+summary_stats = arrayfun( ...
+    @(x) structfun(@get_summary_stats, x, "UniformOutput", false), ...
+    distributions...
+);
 
 set(groot, 'DefaultFigureVisible', 'on');
 
@@ -109,6 +114,12 @@ ylims = {
     [0 250] % all stims 'Expiratory latency'
 };
 
+comparison_conditions = unique({distributions.comparison});
+% conditions = string({distributions.comparison; distributions.surgery_state});
+
+comparison_struct = struct('comparison', comparison_conditions);
+
+
 for i_ftp = 1:length(fields_to_plot)
     field_to_plot = fields_to_plot{i_ftp};
     field_to_plot_split = regexp(field_to_plot,'\.','split');
@@ -117,7 +128,7 @@ for i_ftp = 1:length(fields_to_plot)
     hold on;
     
     in_legend = {};
-    
+
     for cond = 1:size(C,1)
         this_bird = distributions(ic==cond);
     
@@ -138,8 +149,10 @@ for i_ftp = 1:length(fields_to_plot)
             getfield(this_bird(i_bl), field_to_plot_split{:})
             getfield(this_bird(i_drug), field_to_plot_split{:});
         };
+        
         data = cellfun(@median, data);
-
+        comparison_struct = add_to_comparison_struct(comparison_struct, comparison, field_to_plot, data);
+        
         if normalize
             data = (data - data(1)) / data(1);
         end
@@ -160,7 +173,7 @@ for i_ftp = 1:length(fields_to_plot)
     xticklabels(["baseline", "drug"])
 
     ylim(ylims{i_ftp})
-
+    
     if normalize
         ylabel('Normalized change');
     else
@@ -174,7 +187,81 @@ for i_ftp = 1:length(fields_to_plot)
 
     saveas(fig, fig_fname)
 end
+
+
+%% run stats
+
+p_vals = struct('comparison', {comparison_struct.comparison});
+
+for i_cond = 1:length(comparison_struct)
+    assert( strcmp(p_vals(i_cond).comparison, comparison_struct(i_cond).comparison) )
+
+    this_cond = rmfield(comparison_struct(i_cond), 'comparison');
+    fields = fieldnames(this_cond);
+
+    for i_fn = 1:length(fields)
+        this_field = this_cond.(fields{i_fn});
+        p_vals(i_cond).(fields{i_fn}) = signrank(this_field.baseline, this_field.drug);
+    end
+end
+clear this_field this_cond fields
+
+
 %%
+save(fullfile(save_root, 'distributions.mat'), ...
+    "distributions", "summary_stats", "comparison_struct", "p_vals");
+
+%%
+
+function comparison_struct = add_to_comparison_struct(comparison_struct, comparison, fieldname, data)
+    fieldname = strrep(fieldname, '.', '__');  % don't bother w substruct..
+
+    i_cond = strcmp({comparison_struct.comparison}, comparison);
+
+    if ~isfield(comparison_struct(i_cond), fieldname) || isempty(comparison_struct(i_cond).(fieldname))
+        comparison_struct(i_cond).(fieldname).baseline = [];
+        comparison_struct(i_cond).(fieldname).drug = [];
+    end
+
+    comparison_struct(i_cond).(fieldname).baseline(end+1) = data(1);
+    comparison_struct(i_cond).(fieldname).drug(end+1) = data(2);
+end
+
+function statistics = get_summary_stats(distr, options)
+
+    arguments
+        distr;
+        options.statFunction = @make_stat_summary;
+    end
+
+    if isstruct(distr)  % runs recursively
+
+        % pass options recursively; need cell
+        C = [fieldnames(options).'; struct2cell(options).'];
+        C=C(:).';
+
+        statistics = arrayfun( ...
+            @(x) structfun(@(y) get_summary_stats(y, C{:}), x, "UniformOutput", false), ...
+            distr...
+        );
+
+    elseif ~isnumeric(distr) | isscalar(distr) | isempty(distr)
+        statistics = distr;
+
+    else  % this actually is a distribution; compute stats
+        statistics=options.statFunction(distr);
+
+    end
+
+end
+
+function stat_summary = make_stat_summary(verified_distr)
+
+    stat_summary.median = median(verified_distr);
+    stat_summary.mean = mean(verified_distr);
+    stat_summary.std = std(verified_distr);
+
+end
 
 function distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext)
 
