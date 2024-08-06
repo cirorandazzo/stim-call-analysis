@@ -24,8 +24,8 @@ p.files.save.call_seg_save_file = [];
 p.files.save.call_breath_seg_save_file = [p.files.save.save_prefix '-data.mat'];
 p.files.save.parameter_save_file = [p.files.save.save_prefix '-parameters.mat'];
 % p.files.save.breathing_audio_save_file = [p.files.save.save_prefix '-breathing_audio.mat'];  % savefile for breathing & audio separately without analyzed data
-p.files.save.breathing_audio_save_file = [p.files.save_folder '-breathing_audio.mat'];  % savefile for breathing & audio separately without analyzed data
-
+% p.files.save.breathing_audio_save_file = [p.files.save_folder '-breathing_audio.mat'];  % savefile for breathing & audio separately without analyzed data
+p.files.save.breathing_audio_save_file = []; 
 
 p.files.figure_folder = fullfile('.', 'data', 'figures', p.files.group, p.files.bird_name);
 
@@ -71,6 +71,6 @@ p.breath_seg.stim_window.post_stim_ms = 10;  % 10ms
 
 % stim-induced inspirations
 p.breath_seg.stim_induced_insp_window_ms = 35; % window after stimulation to check for inspiration onset (milliseconds).
-p.breath_seg.derivative_smooth_window_ms = 50; % number of frames to smooth 1st/2nd derivatives, for inspiratory onset
+p.breath_seg.derivative_smooth_window_f = 50; % number of frames to smooth 1st/2nd derivatives, for inspiratory onset
 
 end

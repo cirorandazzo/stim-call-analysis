@@ -224,6 +224,19 @@ if do_group_plots  % note: automatically set to false if any data structs have >
     ylabel('Probability');
     saveas(fig_group_insp, [group_figure_save_folder '/group-insp_latency'], group_figure_save_format);
 
+    % Expiratory latencies
+    fig_group_exp = make_group_histogram( ...
+        summary_group, ...
+        'exp_latencies', ...
+        BinWidth=2, ...
+        Normalization='probability' ...
+    );
+
+    title('Stim-induced expiration latency');
+    xlabel('Latency to expiration (ms)');
+    ylabel('Probability');
+    saveas(fig_group_exp, [group_figure_save_folder '/group-exp_latency'], group_figure_save_format);
+
 
     % Audio-segmented call latencies
     fig_group_audio = make_group_histogram( ...
@@ -236,7 +249,7 @@ if do_group_plots  % note: automatically set to false if any data structs have >
     title('Audio-thresholded call latency');
     xlabel('Latency to call (ms)');
     ylabel('Probability');
-    xlim([0 180]);
+    % xlim([0 180]);
     saveas(fig_group_audio, [group_figure_save_folder '/group-audio_latency'], group_figure_save_format);
 
     

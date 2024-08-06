@@ -87,6 +87,47 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
     img_ext = options.ImageExtension;
     to_plot = options.ToPlot;
     
+
+    %% ALL STIM PLOTS
+
+    % BREATH TRACES
+    if ismember('breath_trace', to_plot)
+        fig = figure;
+        hold on;
+
+        title_str = append(...
+            bird_name,...
+            ' breath traces, all stims (',...
+            int2str(size(data.breathing_filt, 1)),...
+            ')'...
+            );
+
+        title(title_str, 'interpreter', 'none');
+        xlabel('Time since stim (ms)')
+        ylabel('Pressure')
+        
+        rows_to_plot = data.breathing_filt;  % formerly data.breathing_filt(trs_one_call, :)
+        x = f2ms(1:size(rows_to_plot, 2), fs, stim_i);
+        
+        plot(x, rows_to_plot', 'Color', '#c3c3c3', 'LineWidth', 0.5);  % transpose is very important, might crash computer otherwise :(
+        plot(x, mean(rows_to_plot, 1), 'black', 'LineWidth', 4);
+
+        l = min(rows_to_plot, [], 'all'); 
+        h = max(rows_to_plot, [], 'all');
+        
+        plot([0 0], [l h], 'Color', 'black', 'LineStyle', '--')
+        
+        xlim(options.BreathTraceWindowMs);
+
+        savefile = strcat(save_prefix, ['breathTraces.' img_ext]);
+        saved_figs{end+1} = savefile;
+        saveas(fig, savefile);
+
+        hold off;
+        close;
+    end
+
+    %% ONE CALL PLOTS
     trs_one_call = data.call_seg.one_call;
     
     if isempty(trs_one_call)
@@ -142,36 +183,6 @@ function saved_figs = pipeline_plots(data, fs, stim_i, bird_name, save_prefix, o
         savefile = strcat(save_prefix, ['audHist.' img_ext]);
         saved_figs{end+1} = savefile;
         saveas(fig, savefile);
-        close;
-    end
-
-    % BREATH TRACES
-    if ismember('breath_trace', to_plot)
-        fig = figure;
-        hold on;
-
-        title([bird_name ' breath traces (' int2str(length(trs_one_call)) ')'], 'interpreter', 'none');
-        xlabel('Time since stim (ms)')
-        ylabel('Pressure')
-        
-        rows_to_plot = data.breathing_filt(trs_one_call, :);
-        x = f2ms(1:size(rows_to_plot, 2), fs, stim_i);
-        
-        plot(x, rows_to_plot', 'Color', '#c3c3c3', 'LineWidth', 0.5);  % transpose is very important, might crash computer otherwise :(
-        plot(x, mean(rows_to_plot, 1), 'black', 'LineWidth', 4);
-
-        l = min(rows_to_plot, [], 'all'); 
-        h = max(rows_to_plot, [], 'all');
-        
-        plot([0 0], [l h], 'Color', 'black', 'LineStyle', '--')
-        
-        xlim(options.BreathTraceWindowMs);
-
-        savefile = strcat(save_prefix, ['breathTraces.' img_ext]);
-        saved_figs{end+1} = savefile;
-        saveas(fig, savefile);
-
-        hold off;
         close;
     end
 

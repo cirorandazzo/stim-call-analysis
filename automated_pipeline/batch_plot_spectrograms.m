@@ -53,7 +53,12 @@ parfor i_df = 1:length(data_files)
     set(fig, "Position", [2   356   894   680]);
 
     for i_c=1:length(data)
-        cond_string = strcat(bird_name, '-', data(i_c).drug, '_', data(i_c).current);
+    
+        if length(data)>1
+            cond_string = strcat(bird_name, '-', data(i_c).drug, '_', data(i_c).current);
+        else
+            cond_string = bird_name;
+        end
         
         for i_ccc = 1:length(call_count_cats)
         % parfor i_ccc = 1:length(call_count_cats)  % replace top-level parfor with this one if only plotting for 1 bird

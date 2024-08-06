@@ -49,6 +49,7 @@ function summary_group = make_group_summaries(summary_bird)
         % merged latency arrays
         summary_group(i_group).insp_latencies = [this_group.insp_latencies];
         summary_group(i_group).audio_latencies = [this_group.audio_latencies];
+        summary_group(i_group).exp_latencies = [this_group.exp_latencies];
         
         summary_group(i_group).birds = {this_group.bird};
 

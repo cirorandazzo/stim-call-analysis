@@ -7,14 +7,15 @@ function [call_seg_data] = s3_segment_calls( ...
 % PARAMETERS
 %   TODO
 % 
-% - filter, rectify, smooth audio data (turn filter off with options.NoAudioProcessing
+% - filter, rectify, smooth audio data
 % - segment calls
 % - get spectral features of processed data
 % 
+% Note: kwarg NoAudioProcessing removed.
+% 
 % DESCRIPTION
 % Segments calls from cut trials of raw audio data in `proc_struct` (see s2).
-%   - filtering, rectification, and smoothing on the audio data (turn
-%           filter off with options.NoAudioProcessing = true;
+%   - filtering, rectification, and smoothing on the audio data
 %   - audio-thresholded segmentation of calls (thres = parameter q * median(pre-stimulus period))
 %   - compute spectral features of cut calls
 % 
@@ -43,7 +44,6 @@ function [call_seg_data] = s3_segment_calls( ...
 %       2x1 integer array containing the start and end indices of the window
 %       in which to look for calls.
 %   options: Optional keyword parameter.
-%       - NoAudioProcessing: If 1, skip audio filtering, rectification, and smoothing
 %
 % OUTPUT
 %   call_seg_data: 
@@ -65,10 +65,10 @@ function [call_seg_data] = s3_segment_calls( ...
 %                       indices of trials where exactly one call was detected (ie, "one call trials")
 %                   - multi_calls:
 %                       indices of trials where more than one call was detected
-%                   - audio_filt_call:
-%                       for one call trials, store filtRecSmoothed audio from onset:offset
+%                   - audio_call/audio_filt_call:
+%                       for one call trials, store raw or filtRecSmoothed audio (respectively) from onset:offset
 %                   - acoustic_features:
-%                       acoustic features computed from audio_filt_calls
+%                       acoustic features computed from audio_call
 %                   - q/min_int/dur:
 %                       store an extra copy of parameters
 % 
@@ -85,23 +85,19 @@ arguments
     q
     stim_i
     post_stim_call_window_ii (2,1) {mustBeInteger}
-    options.NoAudioProcessing = 0
+    options = [];  % Note: keyword argument was removed.
 end
 
 for c=length(proc_data):-1:1  % for each condition
-    if options.NoAudioProcessing
-        audio = proc_data(c).audio;
-    else
-        a = proc_data(c).audio;
-        
-        audio = filterRectifySmooth(a, fs, f_low, f_high, audio_smoothing_window, filter_type);
-        proc_data(c).audio_filt = audio;
-    end
+    audio = proc_data(c).audio;
+    
+    audio_filt = filterRectifySmooth(audio, fs, f_low, f_high, audio_smoothing_window, filter_type);
+    proc_data(c).audio_filt = audio_filt;
 
     [proc_data(c).call_seg.noise_thresholds, ...
         call_onsets, ...
         call_offsets ...
-        ] = segmentCalls(audio, fs, min_int, min_dur, q, stim_i);
+        ] = segmentCalls(audio_filt, fs, min_int, min_dur, q, stim_i);
 
     %--only take calls within desired window
     
@@ -129,12 +125,17 @@ for c=length(proc_data):-1:1  % for each condition
     % For trials with EXACTLY ONE call, cut call audio & save 
     if ~isempty(proc_data(c).call_seg.one_call)
         proc_data(c).call_seg.audio_filt_call = arrayfun( ...
+            @(tr) audio_filt(tr, proc_data(c).call_seg.onsets{tr}:proc_data(c).call_seg.offsets{tr}), ...
+            proc_data(c).call_seg.one_call, ...
+            'UniformOutput',false);
+
+        proc_data(c).call_seg.audio_call = arrayfun( ...
             @(tr) audio(tr, proc_data(c).call_seg.onsets{tr}:proc_data(c).call_seg.offsets{tr}), ...
             proc_data(c).call_seg.one_call, ...
             'UniformOutput',false);
 
         proc_data(c).call_seg.acoustic_features = getAcousticFeatures( ...
-            proc_data(c).call_seg.audio_filt_call, fs);
+            proc_data(c).call_seg.audio_call, fs);
 
         proc_data(c).call_seg.acoustic_features.latencies = arrayfun( ...
             @(tr) (call_onsets{tr} - stim_i) * 1000 / fs, ...
@@ -177,8 +178,6 @@ function [smooth, params] = filterRectifySmooth(unfilt, fs, f_low, f_high, sm_wi
     params.f_low = f_low;
     params.f_high = f_high;
     params.sm_win = sm_win;
-
-
 end
 
 % fma
