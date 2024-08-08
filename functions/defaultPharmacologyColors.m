@@ -7,7 +7,7 @@ function [color] = defaultPharmacologyColors(drug)
     switch drug
         % TODO: better deal with variation in washout names
         case {"baseline", "washout", "washout_muscimol", "washout_muscimol2"}
-            color = '#78ABA8';
+            color = '#405e5d';
         case "gabazine"
             color = '#81A263';
         case "muscimol"

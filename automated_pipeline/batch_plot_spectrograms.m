@@ -29,7 +29,7 @@ save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\spectr
 ext = '.jpeg';
 skip_existing = true;
 save_wav = true;
-xl = [1450 2000];  % ms. not zeroed on stimulus.
+xl = [1000 2000];  % ms. not zeroed on stimulus.
 
 spec_threshold = 1.25e-2; % determined manually; see spectrogram_thresholding.m
 
@@ -43,6 +43,7 @@ delete(gcp('nocreate'));
 parpool(5);
 set(groot, 'DefaultFigureVisible','off');  % suppress figures
 
+start = tic;
 parfor i_df = 1:length(data_files)
     data = load(data_files{i_df}, 'data').data;
     bird_name = data(1).bird;
@@ -62,7 +63,7 @@ parfor i_df = 1:length(data_files)
         
         for i_ccc = 1:length(call_count_cats)
         % parfor i_ccc = 1:length(call_count_cats)  % replace top-level parfor with this one if only plotting for 1 bird
-            disp(strcat('Plotting: ', cond_string, ', ', call_count_cats{i_ccc}))
+            disp(append('Plotting: ', cond_string, ', ', call_count_cats{i_ccc}))
             tic
             trs = data(i_c).call_seg.(call_count_cats{i_ccc});
     
@@ -148,6 +149,8 @@ parfor i_df = 1:length(data_files)
     close all hidden;
 end
 
-disp('Finished spectrogramming!')
 delete(gcp('nocreate'));
+
+disp('Finished spectrogramming! Total time:')
+toc(start);
 set(groot, 'DefaultFigureVisible','on');  % un-suppress figures

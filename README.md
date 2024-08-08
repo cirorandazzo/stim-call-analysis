@@ -110,9 +110,15 @@ This function segments breaths from all trials in call_seg_data.
     - Take window of centered breath wave: stim onset to `p.breath_seg.stim_induced_insp_window_ms` ms after stim onset
     - Find time of minimum second derivative (ie, ). Intermediate smoothing after first derivative and before taking min of second derivative (moving mean with window size `p.breath_seg.derivative_smooth_window_f`).
 - Normalized amplitudes
-    - Inspiratory amplitude: minimum of centered breath wave in window: stim onset to `p.breath_seg.stim_induced_insp_window_ms` ms after stim onset
+    - Inspiratory amplitude: minimum of centered breath wave in window: `p.call_seg.post_stim_call_window_ii`
     - Expiratory amplitude: maximum of centered breath wave in window: `p.call_seg.post_stim_call_window_ii`
-    - Both normalized to min/max of `pre_stim_amp_normalize_window` (hardcoded in `s4_segment_breaths`, 0.5s before stim to stim onset)
+    - Both normalized to min/max of `pre_stim_amp_normalize_window` (hardcoded in `s4_segment_breaths`, 1s before stim to stim onset)
+- Respiratory rate
+    - Get all pre-stim breath zero-crossings.
+    - t = duration between first and last zero crossings (disregard whether insp or exp)
+    - n = total # zero crossings
+    - resp rate = (n/2)/t; ie, number of full breaths between these crossings. 
+    - n.b. For some conditions with low respiratory rate, only 1 insp or only 1 exp was found in the entire pre-stim window, so exp-to-exp or insp-to-insp timing is not always possible.
 
 TODO: describe ZK's segment breath algorithm (`ek_segmentBreaths_current`)
 
@@ -142,6 +148,8 @@ TODO: pipeline plots
 
 TODO: If you run `main.m`, this is what to expect as output in the differnet conditions...
 
+TODO: DM/PAm non-pharm analyses moved to ./automated_pipeline/dmpam_group_comparisons.
+
 TODO: functions applicable only for DM/PAm
 - `make_group_summaries`
 - `make_group_histogram`
@@ -153,6 +161,7 @@ TODO: DM/PAm summary stuff
 ## DM-Stimulation + HVC Pharmacology
 
 TODO: pharmacology summary stuff. note where these analyses are found & that they error out in some cases.
+folder: ./pharmacology_analyses
 
 # Parameters
 
@@ -197,7 +206,7 @@ TODO: pharmacology summary stuff. note where these analyses are found & that the
     - `q`: audio threshold = `q` * (median amplitude of pre-stimulation audio)
     - `min_interval_ms`: minimum time (in ms) between 2 notes to be considered separate notes (else merged)
     - `min_duration_ms`: ms; minimum duration of note (In ms) to be considered (else ignored)
-    - `post_stim_call_window_ii`: only check for call within these frames of the window (length 2 vector, in units of frames. eg, [100 200] will only check frames 100-200 of the trial). Also used as window for expiratory amplitude.
+    - `post_stim_call_window_ii`: only check for call within these frames of the window (length 2 vector, in units of frames. eg, [100 200] will only check frames 100-200 of the trial). Also used as window for expiratory and inspiratory amplitude.
 - `breath_seg`: parameters for breath segmentation (see step 4)
     - *for zero-crossing breath segmentation*
         - `min_duration_fr`: min time (FRAMES) between 2 insps or 2 exps.

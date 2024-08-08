@@ -25,6 +25,7 @@ if ~exist("do_plots", "var")
     do_plots=true;
 end
 
+if ~suppress_reprocess
 %% STEP 1: load intan data
 
 if verbose 
@@ -46,7 +47,11 @@ if isempty(ext)  % DIRECTORY, read all .rhs files
     [unproc_data, parameter_names] = s1_load_raw(file_list, filename_labels=p.files.labels);
 
 elseif strcmpi(ext, '.csv')  % .csv batch specifying parameters & rhs folder names
-    opts = detectImportOptions(p.files.raw_data);
+    opts = detectImportOptions( ...
+        p.files.raw_data, ...
+        'VariableNamesLine',1, ...
+        'Delimiter', {','}...
+    );
     opts = setvartype(opts, opts.VariableNames, 'char');  
     opts = setvaropts(opts, 'FillValue', '');
 
@@ -227,6 +232,23 @@ if ~isempty(p.files.save.parameter_save_file)
     end
 end
 
+else % load data instead of reprocessing
+
+    if verbose
+        disp('suppress_reprocess==true! Loading already processed files...')
+        disp(append('Parameter file: ', p.files.save.parameter_save_file))
+    end
+    load(p.files.save.parameter_save_file, 'p');  % load original parameter file
+
+    % overwrite original parameter on what to plot
+    % p.files.to_plot = {'exp', 'aud', 'insp', 'breath_trace', 'breath_trace_insp'};
+
+    if verbose
+        disp(append('Processed data file: ', p.files.save.call_breath_seg_save_file))
+    end
+    load(p.files.save.call_breath_seg_save_file, 'data');
+
+end
 %% PLOT FIGURES
 
 if do_plots

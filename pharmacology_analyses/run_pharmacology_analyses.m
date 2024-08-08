@@ -6,8 +6,10 @@
 
 %% General
 % save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\comparisons-svg";
-save_root = "C:\Users\ciro\Desktop\temp";
+save_root = "./data/figures/pharmacology-summary";
 fig_ext = ".svg";
+
+skip_indiv_plots = false;
 
 % Load Comparison Directions
 
@@ -35,12 +37,16 @@ for pfile_i = length(parameter_files):-1:1
     % save to bird_name folder; useful if folder only contains comparisons
     save_prefix = fullfile(save_root, bird_name);
 
-    bird_distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext);
+    bird_distributions = run_comparisons( ...
+        data_path, bird_name, comparisons, save_prefix, fig_ext, ...
+        SkipPlots=skip_indiv_plots);
     
     [bird_distributions.surgery_state] = deal(surgery_state);
     distributions = [distributions bird_distributions];
 
-    clearvars -except save_root fig_ext parameter_files current_dir pfile_i distributions
+    clearvars -except ...
+        save_root fig_ext parameter_files current_dir pfile_i ...
+        distributions skip_indiv_plots
 end
 
 distributions = orderfields(distributions, [14 16 15 6 1:5 7:13]);
@@ -86,6 +92,7 @@ fields_to_plot = {
     'all_stims.insp_amplitude'
     'all_stims.exp_amplitude'
     'all_stims.latency_exp'
+    'all_stims.respiratory_rate'
 };
 
 ylabels = {
@@ -99,6 +106,7 @@ ylabels = {
     'Inspiratory amplitude (normalized)'
     'Expiratory amplitude (normalized)'
     'Expiratory latency (ms)'
+    'Respiratory rate'
 };
 
 ylims = {
@@ -112,6 +120,7 @@ ylims = {
     [0 6] % all stims 'Inspiratory amplitude'
     [0 16] % all stims 'Expiratory amplitude'
     [0 250] % all stims 'Expiratory latency'
+    [-inf inf]  % respiratory rate
 };
 
 comparison_conditions = unique({distributions.comparison});
@@ -266,7 +275,16 @@ function statistics = get_summary_stats(distr, options)
 
 end
 
-function distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext)
+function distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext, options)
+
+    arguments
+        data_path
+        bird_name
+        comparisons
+        save_prefix
+        fig_ext
+        options.SkipPlots = false;
+    end
 
     % load processed data
     load(data_path, 'data')
@@ -283,7 +301,9 @@ function distributions = run_comparisons(data_path, bird_name, comparisons, save
             colors = arrayfun(@(x) defaultPharmacologyColors(x.drug), cut_data, UniformOutput=false);
         end
 
-        [new_figs, new_distributions] = pharmacology_plot_pipeline(cut_data, bird_name, comparison, colors, SkipPlots=true, Verbose=true);
+        [new_figs, new_distributions] = pharmacology_plot_pipeline( ...
+            cut_data, bird_name, comparison, colors, ...
+            SkipPlots=options.SkipPlots, Verbose=true);
         figs = [figs new_figs];
 
         [new_distributions.bird_name] = deal(bird_name);
@@ -292,15 +312,19 @@ function distributions = run_comparisons(data_path, bird_name, comparisons, save
     end
     
     % save all figures
-    disp(append("Saving to: ", save_prefix))
-    mkdir(save_prefix)
-    for i_f = 1:length(figs)
-        fig = figs{i_f};
-        fname = append(fig.Name, fig_ext);
-        savefile = fullfile(save_prefix, fname);
-    
-        disp(append("  - ", fname));
-        saveas(fig, savefile);
+    if ~options.SkipPlots
+        disp(append("Saving to: ", save_prefix))
+        mkdir(save_prefix)
+        for i_f = 1:length(figs)
+            fig = figs{i_f};
+            fname = append(fig.Name, fig_ext);
+            savefile = fullfile(save_prefix, fname);
+        
+            disp(append("  - ", fname));
+            saveas(fig, savefile);
+
+            close(fig);
+        end
     end
 end
 

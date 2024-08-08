@@ -58,7 +58,7 @@ p.call_seg.q = 5;  % threshold = p.call_seg.q*MEDIAN
 p.call_seg.min_interval_ms = 30;  % ms; minimum time between 2 notes to be considered separate notes (else merged)
 p.call_seg.min_duration_ms = 10;  % ms; minimum duration of note to be considered (else ignored)
 
-p.call_seg.post_stim_call_window_ii = ([10 350] * p.fs/1000)+p.window.stim_i;  % only check for call trial within this window after stim onset
+p.call_seg.post_stim_call_window_ii = ([10 350] * p.fs/1000)+p.window.stim_i;  % only check for call trial, insp amp, exp amp within this window after stim onset
 
 %--breath segmentation
 p.breath_seg.min_duration_fr = 10 * p.fs / 1000;  % min time (FRAMES) between 2 insps/2exps
