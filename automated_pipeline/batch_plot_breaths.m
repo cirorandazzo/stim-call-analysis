@@ -3,19 +3,14 @@
 % 
 % Batch plot the spectrograms from multiple processed data files.
 % 
-% NOTE: the parfor (parallel for) loop has some memory leak. If you get a memory error, just re-run the code with `skip_existing=True`, or replace parfor with for (will take a lot longer.)
+% NOTE: removed parfor from this one, it's decently fast.
 
 % for stim data
 fs = 30000;
 stim_i = 45001;  % stimulation onset frame index
 
-data_files = {
-    "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\bu69bu75\bu69bu75-data.mat"
-    "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pk15\pk15-data.mat"
-    "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pk30gr9\pk30gr9-data.mat"
-    "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pk48br83\pk48br83-data.mat"
-    "C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\pu65bk36\pu65bk36-data.mat"
-};
+data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
+data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
 save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths";
 
@@ -47,7 +42,16 @@ set(groot, 'DefaultFigureVisible','off');  % suppress figures
 start = tic;
 for i_df = 1:length(data_files)
     data = load(data_files{i_df}, 'data').data;
-    bird_name = data(1).bird;
+    
+    if isfield(data(1), 'bird')
+        bird_name = data(1).bird;
+
+    else  % bird name not stored in dmpam
+        [~,bird_name,~] = fileparts(data_files{i_df});
+        bird_name = split(bird_name, '-data');
+        bird_name = bird_name{1};
+    end
+    
     x = [1 : length(data(1).audio(1,:))] / fs * 1000;  % ms values for plotting
     
     % make 1 figure that's recycled (prevent memory leak)
@@ -74,7 +78,7 @@ for i_df = 1:length(data_files)
                 continue
             end
 
-            folder = fullfile(save_root, bird_name, cond_string, call_count_cats{i_ccc});
+            folder = fullfile(save_root, cond_string, call_count_cats{i_ccc});
             mkdir(folder);
     
             data_ic = data(i_c);
