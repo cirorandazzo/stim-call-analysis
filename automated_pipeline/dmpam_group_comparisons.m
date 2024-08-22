@@ -7,8 +7,7 @@
 % Requires summary struct output of main processing pipeline (in `main.m`)
 
 % where/how to save group summary figures
-do_group_plots = true;
-group_figure_save_folder = './data/figures';
+group_figure_save_folder = './data/figures/summary';
 group_figure_save_format = 'svg';
 
 plot_scatter_means = true;  % for scatter plots of medians, overlay group means +/- SEM
@@ -16,6 +15,8 @@ plot_scatter_means = true;  % for scatter plots of medians, overlay group means 
 to_exclude_from_group_plot = {   % rejects from summary_bird before running group analyses
     '080720', 'pu81bk43' ... stim noise in audio channel
 };
+
+mkdir(group_figure_save_folder)
 
 %% GROUP PLOT ALL STIMS
 disp('Plotting amplitude summaries for ALL stims (ie, not just call-evoking stims)')

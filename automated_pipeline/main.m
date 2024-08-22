@@ -1,19 +1,24 @@
 % main.m
 % 2024.02.14 CDR
 % 
-% Batch run processing pipeline in `pipeline.m` on all parameter files in param_file_folder (excluding files in cell `to_exclude`). Saves individual data and plots as specified by each parameter file. Also saves group summary plots if `do_group_plots` is true.
+% Batch run processing pipeline in `pipeline.m` on all parameter files in 
+% param_file_folder (excluding files in cell `to_exclude`). Saves 
+% individual data and plots as specified by each parameter file.
 % 
-% Individual data is saved & cleared, but summary structs (`summary_bird` by bird, `summary_group` by group) are kept.
+% Individual data is saved & cleared, but `summary_bird`struct is kept for
+% dm/pam experiments; keep `summary_bird` in the workspace to run
+% `dmpam_group_comparisons`. This struct is empty for pharmacology experiments.
 % 
-% If `only_these` is not empty, will exclude all non-matched parameter files.
+% If `only_these` is not empty, will exclude all non-matched parameter 
+% files.
 
 clear;
 
 %% OPTIONS
 
 % analyze from all parameter files in this folder
-param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\hvc_pharmacology';  
-% param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\dm_pam';  
+% param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\hvc_pharmacology';  
+param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\dm_pam';  
 parameter_files = dir([param_file_folder filesep '**' filesep '*.m'] );
 
 % whether to plot individual figures
@@ -142,7 +147,6 @@ for pfile_i = length(parameter_files):-1:1
             % conditions. not worth the log.
             % TODO: implement summary for bird with multiple conditions
             summary_bird(pfile_i).error = "Summary for bird with multiple conditions is not yet implemented.";
-            do_group_plots = false;
             disp(summary_bird(pfile_i).error);
         end
 
@@ -170,8 +174,8 @@ for pfile_i = length(parameter_files):-1:1
 
     clearvars -except ...
         a current_dir ...
-        i parameter_files run_dt summary_bird verbose do_group_plots ...
-        do_plots suppress_reprocess;
+        i parameter_files run_dt summary_bird verbose ...
+        do_plots suppress_reprocess start_all;
 
 end
 
@@ -179,6 +183,7 @@ disp("Finished processing from " + string(length(parameter_files)) + " param fil
 toc(start_all);
 disp("- See var `summary_bird` for quick view of individual summary data.")
 disp("- To get group plots/stats:")
-disp("    - DM/PAm data: run `dmpam_group_comparisons.m`")
+disp("    - DM/PAm data: run `dmpam_group_comparisons.m` WITHOUT CLEARING var `summary_bird`!")
 disp("    - Pharmacology data: run `run_pharmacology_analyses.m`")
 disp("- Run `./automated_pipeline/batch_plot_spectrograms.m to plot spectrograms with call onsets/offsets.")
+
