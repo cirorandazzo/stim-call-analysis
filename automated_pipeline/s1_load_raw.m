@@ -54,6 +54,7 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
         file_list;
         options.filename_labels {iscell} = {};
         options.file_list_type {isstring} = 'dir';
+        options.datetime_from_filename {islogical} = 1;
         options.verbose (1,1) {islogical} = 0;  % TODO: implement verbosity
     end
     
@@ -124,6 +125,25 @@ function [unproc_data, varargout] = s1_load_raw(file_list, options)
 
     unproc_data = arrayfun(@(x) readIntanWrapper(x, labels), files);
     
+    filename = arrayfun(@(row) row.file.name, unproc_data, UniformOutput=false);
+    [unproc_data.filename] = filename{:}; 
+
+    %% add datetimes to unproc_data
+
+    if options.datetime_from_filename
+        datestrs = string(regexp(filename, '([0-9]{6})_([0-9]{6})', 'match'));
+        dates = datetime(datestrs, InputFormat='yyMMdd_HHmmss');
+        
+        for i = 1:length(unproc_data)
+            unproc_data(i).datetime = dates(i);
+        end
+        
+        % and sort
+        [~,index] = sortrows([unproc_data.datetime].');
+        unproc_data = unproc_data(index);
+        clear index
+    end
+
     %%
     nout = max(nargout, 1) - 1;
     if nout==0

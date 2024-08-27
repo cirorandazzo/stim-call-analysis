@@ -41,6 +41,10 @@ verbose = true;
 %   parameter_save_file. Errors if datafile not found.
 suppress_reprocess = true;
 
+% if true, merges files that have same listed parameters. else, maintains
+% filename as a parameter, so s2 doesn't merge RHS files
+merge_files = true;
+
 %% RUN
 
 start_all = tic;
@@ -173,9 +177,8 @@ for pfile_i = length(parameter_files):-1:1
     disp('  ');  % newline between birds
 
     clearvars -except ...
-        a current_dir ...
-        i parameter_files run_dt summary_bird verbose ...
-        do_plots suppress_reprocess start_all;
+        a current_dir do_plots i merge_files parameter_files run_dt ...
+        start_all summary_bird suppress_reprocess verbose;
 
 end
 

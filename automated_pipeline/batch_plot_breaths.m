@@ -5,34 +5,47 @@
 % 
 % NOTE: removed parfor from this one, it's decently fast.
 
-% for stim data
-fs = 30000;
-stim_i = 45001;  % stimulation onset frame index
+p = default_params([], fs=30000);  % get default parameters
+
+fs = p.fs;
+stim_i = p.window.stim_i;  % stimulation onset frame index
+
+% focus roughly on stim window 
+xl = [stim_i-fs stim_i+(fs/2)] * 1000 / fs;  % ms. not zeroed on stimulus.
+save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-stim";
+
+% xl = [0 stim_i+fs] * 1000 / fs;
+% save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-prestim";
 
 data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
 data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
-save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths";
-
 ext = '.jpeg';
 skip_existing = false;
 save_wav = true;
-xl = [200 2000];  % ms. not zeroed on stimulus.
 
 call_count_cats = {'one_call', 'no_calls', 'multi_calls'};
-
-% PARAMETERS
-amp_window_fr = ([10 350] * fs/1000) + stim_i;  % default_params
-pre_stim_amp_normalize_window = [-1 0] * fs + stim_i;  % hard coded in s4
-
-% insp_window_length_f = 100 * fs / 1000;  % default 35; p.breath_seg.stim_induced_insp_window_ms * fs / 1000
-insp_window_length_f = 35 * fs / 1000;  % p.breath_seg.stim_induced_insp_window_ms * fs / 1000
-
-smooth_window = 50;  %  default_params derivative_smooth_window_f
 
 crosscheck = true;  % requires that computed parameters == computed parameters of datastruct
 
 errors = struct('name', {}, 'error', {});
+
+%% PARAMETERS
+exp_amp_window_fr = stim_i + (fs / 1000 * p.call_seg.post_stim_call_window_ms);
+insp_amp_window_fr = stim_i + (fs / 1000 * p.breath_seg.insp_amp_window_ms);
+
+pre_stim_amp_normalize_window = [-1 0] * fs + stim_i;  % hard coded in s4
+
+insp_window_length_f = p.breath_seg.stim_induced_insp_window_ms * fs / 1000;  % default 35ms
+
+smooth_window = p.breath_seg.derivative_smooth_window_f;
+
+%% plot options
+
+exp_color = 'r';
+insp_color = 'b';
+lw = 0.5;
+
 %%
 close all
 mkdir(save_root)
@@ -54,6 +67,10 @@ for i_df = 1:length(data_files)
     
     x = [1 : length(data(1).audio(1,:))] / fs * 1000;  % ms values for plotting
     
+    % normalize all traces across all conditions to same y_min/y_max
+    y_min = min(arrayfun(@(x) min(vertcat(x.breath_seg.centered), [], "all"), data));
+    y_max = max(arrayfun(@(x) max(vertcat(x.breath_seg.centered), [], "all"), data));
+
     % make 1 figure that's recycled (prevent memory leak)
     fig = figure;
     set(fig, "Position", [2   356   894   680]);
@@ -101,64 +118,75 @@ for i_df = 1:length(data_files)
                     subtitle("tr " + string(tr));
                     title(cond_string, 'Interpreter','none');
     
+                    bs_tr = data_ic.breath_seg(tr);
+
                     hold on
     
-                    % audio
-                    centered = data_ic.breath_seg(tr).centered;
-                    y_min = min(centered, [], 'all');
-                    y_max = max(centered, [], 'all');
+                    % BREATHING
+                    centered = bs_tr.centered;
+
+                    % old: normalize each trace to its own min/max
+                    % y_min = min(centered, [], 'all');
+                    % y_max = max(centered, [], 'all');
                     plot(x, centered)
     
-                    % call lines
+                    % CALL LINES (audio segmented)
                     onsets = data_ic.call_seg.onsets{tr} * 1000/fs;
                     offsets = data_ic.call_seg.offsets{tr} * 1000/fs;
                     
-                    addCallLinesToPlot(onsets, offsets, [y_min y_max])
-    
+                    addCallLinesToPlot(onsets, offsets, [y_min y_max], LineWidth=lw);
+
                     % stimulus
-                    plot([stim_i stim_i] * 1000/fs, [y_min y_max], Color='k', LineStyle='--', LineWidth=1);
+                    plot([stim_i stim_i] * 1000/fs, [y_min y_max], Color='k', LineStyle='--', LineWidth=lw);
                     
                     % AMPLITUDES
                     % inspiratory amplitude
                     pre_window = centered(pre_stim_amp_normalize_window(1) : pre_stim_amp_normalize_window(2) );
-                    post_window = centered(amp_window_fr(1): amp_window_fr(2));
-        
+                    insp_window = centered(insp_amp_window_fr(1): insp_amp_window_fr(2));
+                    exp_window = centered(exp_amp_window_fr(1): exp_amp_window_fr(2));
+
                     [pre_stim_min, i_min_pre] = min(pre_window);
-                    [post_stim_min, i_min_post] = min(post_window);
+                    [post_stim_min, i_min_post] = min(insp_window);
                     
                     if crosscheck
-                        assert(data_ic.breath_seg(tr).insp_amplitude == post_stim_min / pre_stim_min);
+                        assert(bs_tr.insp_amplitude == post_stim_min / pre_stim_min);
                     end
 
                     % expiratory amplitude
                     [pre_stim_max, i_max_pre] = max(pre_window);
-                    [post_stim_max, i_max_post] = max(post_window);
+                    [post_stim_max, i_max_post] = max(exp_window);
                     
                     if crosscheck
-                        assert(data_ic.breath_seg(tr).exp_amplitude == post_stim_max / pre_stim_max);
+                        assert(bs_tr.exp_amplitude == post_stim_max / pre_stim_max);
                     end
 
-                    % insp latency
                     % LATENCIES
-                    
-                    latency_insp_f = getInspiratoryLatency(data_ic.breathing(tr, :), stim_i, insp_window_length_f, smooth_window);
-                    
-                    if crosscheck
-                        assert(latency_insp_f == data_ic.breath_seg(tr).latency_insp_f)
-                    end
+                    % insp latency
+                    latency_insp_f = bs_tr.latency_insp_f;
 
                     % scatter plot
-                    ms_maxes = [i_max_pre + pre_stim_amp_normalize_window(1), i_max_post + amp_window_fr(1)] * 1000 / fs;
+                    ms_maxes = [i_max_pre + pre_stim_amp_normalize_window(1), i_max_post + exp_amp_window_fr(1)] * 1000 / fs;
                     ms_mins = [i_min_pre + pre_stim_amp_normalize_window(1), i_min_post + stim_i] * 1000 / fs;
                     ms_latency = (latency_insp_f + stim_i) * 1000 / fs;
 
-                    scatter(ms_maxes, [pre_stim_max, post_stim_max], [], 'r')  % EXPS
-                    scatter(ms_mins, [pre_stim_min, post_stim_min], [], 'b') % INSPS
+                    scatter(ms_maxes, [pre_stim_max, post_stim_max], [], exp_color)  % EXPS
+                    scatter(ms_mins, [pre_stim_min, post_stim_min], [], insp_color) % INSPS
                     
                     scatter(ms_latency, centered(stim_i+latency_insp_f), [], 'g')  % INSP LATENCY
 
+                    % BREATH ZERO CROSSINGS
+                    insps = [bs_tr.insps_pre bs_tr.insps_post];
+                    exps = [bs_tr.exps_pre bs_tr.exps_post];
+
+                    scatter(insps * 1000/fs, centered(insps), insp_color, Marker='+');
+                    scatter(exps  * 1000/fs, centered(exps),  exp_color,  Marker='+');
+
+                    scatter(bs_tr.insps_peri * 1000/fs, centered(bs_tr.insps_peri), insp_color, Marker='x');
+                    scatter(bs_tr.exps_peri  * 1000/fs, centered(bs_tr.exps_peri),  exp_color,  Marker='x');
+
+                    % 
+                    ylim([y_min, y_max]);
                     hold off
-    
                     %% plot a second thing
                     % ax2 = subplot(2,1,2);
                     % hold on;
@@ -167,6 +195,7 @@ for i_df = 1:length(data_files)
                     %% link xaxes & save figure
                     % linkaxes([ax2 ax1], 'x')
                     xlim(xl);
+                    xlabel('Time since trial onset (ms)')
                     
                     saveas( fig, figpath );
                 catch e

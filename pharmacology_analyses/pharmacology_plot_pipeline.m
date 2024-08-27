@@ -209,13 +209,13 @@ function [figs, distributions] = pharmacology_plot_pipeline(cut_data, bird_name,
 
     
     %% exp amplitude
-    fig = plotMultiHistogram(insp_amplitudes, BinWidth=.04, Colors=colors, LegendLabels=conditions);
+    fig = plotMultiHistogram(exp_amplitudes, BinWidth=.04, Colors=colors, LegendLabels=conditions);
     
     title([bird_name ' expiratory amplitude'], 'interpreter', 'none');    
-    xlabel("Inspiratory Amplitude");
+    xlabel("Expiratory Amplitude");
     ylabel("Count");
     
-    fig.Name = append(bird_name, "-", comparison, "-insp_amp");
+    fig.Name = append(bird_name, "-", comparison, "-exp_amp");
     figs{end+1} = fig;
     
     
@@ -247,6 +247,58 @@ function [figs, distributions] = pharmacology_plot_pipeline(cut_data, bird_name,
     % end
 
     fig.Name = append(bird_name, "-", comparison, "-respiratory_rate");
+    figs{end+1} = fig;
+
+
+    %% respiratory rate - timeseries
+    fig=figure;
+    hold on
+    for i=1:length(conditions)
+        plot(respiratory_rate{i}, Color=colors{i}, DisplayName=conditions{i});
+    end
+    
+    ylabel('Respiratory Rate (Hz)')
+    xlabel('Stim #')
+    title([bird_name ' pre-stim respiratory rate by trial'], 'interpreter', 'none')
+    
+    legend;
+    hold off;
+
+    fig.Name = append(bird_name, "-", comparison, "-TIME-respiratory_rate");
+    figs{end+1} = fig;
+
+    %% insp ampltiude - timeseries
+    fig=figure;
+    hold on
+    for i=1:length(conditions)
+        plot(insp_amplitudes{i}, Color=colors{i}, DisplayName=conditions{i});
+    end
+    
+    ylabel('Inspiratory amplitude')
+    xlabel('Stim #')
+    title([bird_name ' inspiratory amplitude by trial'], 'interpreter', 'none')
+    
+    legend;
+    hold off;
+    
+    fig.Name = append(bird_name, "-", comparison, "-TIME-insp_amp");
+    figs{end+1} = fig;
+    
+    %% exp ampltiude - timeseries
+    fig=figure;
+    hold on
+    for i=1:length(conditions)
+        plot(exp_amplitudes{i}, Color=colors{i}, DisplayName=conditions{i});
+    end
+    
+    ylabel('Expiratory amplitude')
+    xlabel('Stim #')
+    title([bird_name ' expiratory amplitude by trial'], 'interpreter', 'none')
+    
+    legend;
+    hold off;
+    
+    fig.Name = append(bird_name, "-", comparison, "-TIME-exp_amp");
     figs{end+1} = fig;
     
 

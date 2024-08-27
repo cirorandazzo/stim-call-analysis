@@ -67,9 +67,10 @@ for cond=size(conditions,1):-1:1
 
                     int_struct = [];
 
-                   [int_struct.breathing, ...
+                    [int_struct.breathing, ...
                     int_struct.breathing_filt,...
-                    int_struct.audio] = ...
+                    int_struct.audio, ...
+                    int_struct.bad_stim_count] = ...
                     getCallParamsFromFile(...
                         stim, ...
                         breathing, ...
@@ -79,6 +80,7 @@ for cond=size(conditions,1):-1:1
                         trial_radius_s, ...
                         stim_cooldown_fr);
 
+                    int_struct.filename = x.file.name;
                     proc_struct = [proc_struct int_struct];
                 end
 
@@ -93,6 +95,8 @@ for cond=size(conditions,1):-1:1
             proc_data(cond).breathing=cell2mat({proc_struct.breathing}');
             proc_data(cond).breathing_filt=cell2mat({proc_struct.breathing_filt}');
             proc_data(cond).audio=cell2mat({proc_struct.audio}');
+            proc_data(cond).filenames={proc_struct.filename}';
+            proc_data(cond).bad_stims=cell2mat({proc_struct.bad_stim_count}');
             % proc_data(cond).latencies=cell2mat({proc_struct.latencies}');
             % proc_data(cond).exp_amps=cell2mat({proc_struct.exp_amps}');
             % proc_data(cond).insp_amps=cell2mat({proc_struct.insp_amps}');
@@ -114,7 +118,7 @@ end
 %% LOCAL HELPERS
 
 
-function [breathing, breathing_filt, audio] ...
+function [breathing, breathing_filt, audio, bad_stim_count] ...
     = getCallParamsFromFile( ...
         data_stim, data_breathing, data_sound, deq_breath, fs, trial_radius_s, stim_cooldown_fr)
 % LOCAL HELPER: getCallParamsFromFile
@@ -142,7 +146,7 @@ function [breathing, breathing_filt, audio] ...
     r_fr = trial_radius_s * fs;  % num of frames to take before/after stim
     l_window = 2*r_fr+1;
 
-    stim_ii = getGoodStims(stim_ii, r_fr, length(data_breathing));
+    [stim_ii, stim_ii_bad] = getGoodStims(stim_ii, r_fr, length(data_breathing));
    
     % == preallocate for speed ==
     z = zeros([length(stim_ii) l_window]);  % vector length l_window per trial
@@ -161,13 +165,15 @@ function [breathing, breathing_filt, audio] ...
         audio(j,:) = data_sound(s:e);
     end
 
+    bad_stim_count = length(stim_ii_bad);
 end
 
 
-function stim_t_good = getGoodStims(stim_t, r_fr, data_len)
+function [stim_t_good, stim_t_bad] = getGoodStims(stim_t, r_fr, data_len)
     % only take trials where all data within trial_radius_s exists
 
     stim_t_good = [];
+    stim_t_bad = [];
 
     for i = 1:length(stim_t)
         % window start and end for this stimulation
@@ -176,9 +182,9 @@ function stim_t_good = getGoodStims(stim_t, r_fr, data_len)
 
         if e > data_len ...  %  not enough data at end of trial window 
                 || s < 1  % not enough data at beginning of trial window
-            continue;
+            stim_t_bad = [stim_t_bad, stim_t(i)]; %#ok<AGROW>  % ignore preallocate warning, this is a small array
         else
-            stim_t_good = [stim_t_good stim_t(i)]; %#ok<AGROW>  % ignore preallocate warning, this is a small array
+            stim_t_good = [stim_t_good stim_t(i)]; %#ok<AGROW>
         end
     end
 

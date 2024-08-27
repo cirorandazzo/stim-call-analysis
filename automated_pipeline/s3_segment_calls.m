@@ -1,6 +1,10 @@
 function [call_seg_data] = s3_segment_calls( ...
-    proc_data, fs, f_low, f_high, audio_smoothing_window, filter_type, ...
-    min_int, min_dur, q, stim_i, post_stim_call_window_ii, options)
+    proc_data, ...
+    fs, stim_i, ...
+    f_low, f_high, audio_smoothing_window, filter_type, ...
+    min_int, min_dur, q, ...
+    post_stim_call_window_ms, ...
+    options)
 % S3_SEGMENT_CALLS.m
 % 2024.02.12 CDR from b_segment_calls
 % 
@@ -40,9 +44,8 @@ function [call_seg_data] = s3_segment_calls( ...
 %       noise_threshold = q * median(trial before stimulus). (scalar)
 %   stim_i:
 %       index (in frames) of stimulation. (scalar)
-%   post_stim_call_window_ii:
-%       2x1 integer array containing the start and end indices of the window
-%       in which to look for calls.
+%   post_stim_call_window_ms:
+%       2x1 numeric array containing the window in which to look for calls (milliseconds wrt stim onset).
 %   options: Optional keyword parameter.
 %
 % OUTPUT
@@ -76,6 +79,7 @@ function [call_seg_data] = s3_segment_calls( ...
 arguments
     proc_data
     fs
+    stim_i
     f_low
     f_high
     audio_smoothing_window
@@ -83,10 +87,11 @@ arguments
     min_int
     min_dur
     q
-    stim_i
-    post_stim_call_window_ii (2,1) {mustBeInteger}
+    post_stim_call_window_ms (2,1) {isnumeric}
     options = [];  % Note: keyword argument was removed.
 end
+
+post_stim_call_window_fr = (post_stim_call_window_ms * fs / 1000) + stim_i;
 
 for c=length(proc_data):-1:1  % for each condition
     audio = proc_data(c).audio;
@@ -102,8 +107,8 @@ for c=length(proc_data):-1:1  % for each condition
     %--only take calls within desired window
     
     % check onsets/offsets individually
-    i_on = cellfun(@(x) x >=post_stim_call_window_ii(1) & x<=post_stim_call_window_ii(2), call_onsets, 'UniformOutput',false);
-    i_off = cellfun(@(x) x >=post_stim_call_window_ii(1) & x<=post_stim_call_window_ii(2), call_offsets, 'UniformOutput',false);
+    i_on = cellfun(@(x) x >=post_stim_call_window_fr(1) & x<=post_stim_call_window_fr(2), call_onsets, 'UniformOutput',false);
+    i_off = cellfun(@(x) x >=post_stim_call_window_fr(1) & x<=post_stim_call_window_fr(2), call_offsets, 'UniformOutput',false);
 
     % ensure both onset/offset are within that window
     i_good = arrayfun(@(i) {i_on{i} & i_off{i}}, 1:size(i_on,1));
