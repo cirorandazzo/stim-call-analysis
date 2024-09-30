@@ -37,7 +37,7 @@ for pfile_i = length(parameter_files):-1:1
     % save to bird_name folder; useful if folder only contains comparisons
     save_prefix = fullfile(save_root, bird_name);
 
-    bird_distributions = run_comparisons( ...
+    bird_distributions = construct_bird_distributions( ...
         data_path, bird_name, comparisons, save_prefix, fig_ext, ...
         SkipPlots=skip_indiv_plots);
     
@@ -51,7 +51,7 @@ end
 
 distributions = orderfields(distributions, [14 16 15 6 1:5 7:13]);
 
-summary_stats = arrayfun( ...
+summary_stats_bird_condition = arrayfun( ...
     @(x) structfun(@get_summary_stats, x, "UniformOutput", false), ...
     distributions...
 );
@@ -229,7 +229,7 @@ summary_stats = [summary_stats_baseline summary_stats_drug];
 clear this_field this_cond fields summary_stats_baseline summary_stats_drug
 
 save(fullfile(save_root, 'pharmacology-stats.mat'), ...
-    "distributions", "summary_stats", "comparison_struct", "p_vals", "summary_stats");
+    "distributions", "summary_stats", "comparison_struct", "p_vals", "summary_stats_bird_condition");
 
 %%
 
@@ -275,7 +275,7 @@ function statistics = get_summary_stats(distr, options)
 
 end
 
-function distributions = run_comparisons(data_path, bird_name, comparisons, save_prefix, fig_ext, options)
+function distributions = construct_bird_distributions(data_path, bird_name, comparisons, save_prefix, fig_ext, options)
 
     arguments
         data_path
