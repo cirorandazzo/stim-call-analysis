@@ -1,0 +1,5 @@
+﻿bird,surgery_condition,drug,current,duration,folder,notes
+bu69bu75,awake,baseline,40,50,"F:\ziggy\hvc_pharmacology\awake\bu69bu75\baseline",Two subfolders
+bu69bu75,awake,washout,12,100,"F:\ziggy\hvc_pharmacology\awake\bu69bu75\washout_muscimol\100ms_400Hz_12uA_230502_194149",
+bu69bu75,awake,muscimol,40,50,"F:\ziggy\hvc_pharmacology\awake\bu69bu75\muscimol\50ms_400Hz_40uA_230502_155120",
+bu69bu75,awake,gabazine,12,100,"F:\ziggy\hvc_pharmacology\awake\bu69bu75\gabazine",Two subfolders

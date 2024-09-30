@@ -1,0 +1,5 @@
+﻿bird,surgery_condition,drug,current,duration,folder,notes
+pk48br83,awake,washout_muscimol,9,100,"F:\ziggy\hvc_pharmacology\awake\pk48br83\washout_muscimol\100ms_9uA_230418_211529",musc_washout_2
+pk48br83,awake,washout_muscimol,10,100,"F:\ziggy\hvc_pharmacology\awake\pk48br83\washout_muscimol\100ms_10uA_230418_212851",musc_washout_2
+pk48br83,awake,muscimol,9,100,"F:\ziggy\hvc_pharmacology\awake\pk48br83\muscimol\100ms_9uA_230418_190214",muscimol2
+pk48br83,awake,gabazine,10,100,"F:\ziggy\hvc_pharmacology\awake\pk48br83\gabazine",Two subfolders
