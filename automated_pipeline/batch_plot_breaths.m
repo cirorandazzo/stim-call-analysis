@@ -5,7 +5,7 @@
 % 
 % NOTE: removed parfor from this one, it's decently fast.
 
-p = default_params([], fs=30000);  % get default parameters
+p = default_params([], fs=30000, radius_seconds=5);  % get default parameters
 
 fs = p.fs;
 stim_i = p.window.stim_i;  % stimulation onset frame index
@@ -17,7 +17,8 @@ save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breath
 % xl = [0 stim_i+fs] * 1000 / fs;
 % save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-prestim";
 
-data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
+data_files= dir("C:\Users\ciro\Box\ziggy\archive\20240827-pharmacology-5s_window_radius\processed\**\*data.mat");
+% data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
 data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
 ext = '.jpeg';
@@ -95,8 +96,10 @@ for i_df = 1:length(data_files)
                 continue
             end
 
-            folder = fullfile(save_root, cond_string, call_count_cats{i_ccc});
-            mkdir(folder);
+            folder1 = fullfile(save_root, 'stim', cond_string, call_count_cats{i_ccc});
+            mkdir(folder1);
+            folder2 = fullfile(save_root, 'prestim', cond_string, call_count_cats{i_ccc});
+            mkdir(folder2);
     
             data_ic = data(i_c);
 
@@ -166,7 +169,7 @@ for i_df = 1:length(data_files)
 
                     % scatter plot
                     ms_maxes = [i_max_pre + pre_stim_amp_normalize_window(1), i_max_post + exp_amp_window_fr(1)] * 1000 / fs;
-                    ms_mins = [i_min_pre + pre_stim_amp_normalize_window(1), i_min_post + stim_i] * 1000 / fs;
+                    ms_mins = [i_min_pre + pre_stim_amp_normalize_window(1), i_min_post + insp_amp_window_fr(1)] * 1000 / fs;
                     ms_latency = (latency_insp_f + stim_i) * 1000 / fs;
 
                     scatter(ms_maxes, [pre_stim_max, post_stim_max], [], exp_color)  % EXPS
@@ -194,10 +197,17 @@ for i_df = 1:length(data_files)
     
                     %% link xaxes & save figure
                     % linkaxes([ax2 ax1], 'x')
-                    xlim(xl);
                     xlabel('Time since trial onset (ms)')
                     
-                    saveas( fig, figpath );
+                    % stim
+                    xlim(xl);
+                    saveas( fig, fullfile(folder1, figname))
+                    
+                    % prestim
+                    xlim([0 stim_i+fs] * 1000 / fs);
+                    saveas( fig, fullfile(folder2, figname))
+
+                    % saveas( fig, figpath );
                 catch e
                    errors(end+1) = struct('name', figname, 'error', e);
                 end

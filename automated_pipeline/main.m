@@ -17,8 +17,8 @@ clear;
 %% OPTIONS
 
 % analyze from all parameter files in this folder
-% param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\hvc_pharmacology';  
-param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\dm_pam';  
+param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\hvc_pharmacology';  
+% param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\dm_pam';  
 parameter_files = dir([param_file_folder filesep '**' filesep '*.m'] );
 
 % whether to plot individual figures
@@ -39,7 +39,7 @@ verbose = true;
 % if true, looks for already processed data + parameter file at 
 %   p.files.save.(x), where x = call_breath_seg_save_file or
 %   parameter_save_file. Errors if datafile not found.
-suppress_reprocess = true;
+suppress_reprocess = false;
 
 % if true, merges files that have same listed parameters. else, maintains
 % filename as a parameter, so s2 doesn't merge RHS files
