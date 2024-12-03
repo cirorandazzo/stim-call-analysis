@@ -6,6 +6,12 @@ Automated pipeline: `./automated_pipeline/main.m`
 
 TODO: general description of pipeline.
 
+Before running, add the following to path:
+
+- `./automated_pipeline`
+- `./functions`
+- `./pharmacology_analyses`
+
 ## Per-Bird Pipeline
 
 Some notes:
@@ -163,23 +169,108 @@ Output plots at this step:
 
 ## Summary Analyses/Figures
 
-TODO: If you run `main.m`, this is what to expect as output in the differnet conditions...
+Running `main.m` on multiple parameter files adds struct `summary_bird` to the workspace. Many fields of this are left blank for birds with multiple conditions (eg, pharmacology; see below).
 
-TODO: DM/PAm non-pharm analyses moved to ./automated_pipeline/dmpam_group_comparisons.
-
-TODO: functions applicable only for DM/PAm
-
-- `make_group_summaries`
-- `make_group_histogram`
+Run `batch_plot_spectrograms.m` or `batch_plot_breaths.m` to plot spectrograms/breaths with call onsets/offsets."
 
 ### DM/PAm Stimulation (non-pharmacology)
 
-TODO: DM/PAm summary stuff
+To do subsequent DM/PAm analyses, run `dmpam_group_comparisons.m` *without clearing* `summary_bird`!"
+
+> [!WARNING]
+> The distributions stored in `summary_bird` generally only take data from trials where exactly one call was found in the audio data (see occurrences of indexing with `data.call_seg.one_call` in `main.m`).
+
+> [!TIP]
+> You can regenerate `summary_bird` from processed data by running `main.m` with `suppress_reprocess = true`.
+
+`dmpam_group_comparisons.m`
+
+1. `group_plot_all_stims`: Histograms which show multiple groups and merge all birds in a group. Uses data from all stimulations, not just stimulations where a call was detected by audio. Filenames prepended with `hist-ALL_STIM-`. Historgrams plotted:
+
+- Inspiratory amplitude (normalized to prestim ampl)
+- Expiratory amplitude (normalized to prestim ampl)
+- Expiratory latency (ms)
+
+2. Exclude birds with bad audio.
+3. `make_group_summaries`: restructures `summary_bird` to `summary_group`, which merges all birds in a group. See function documentation for details of struct. Uses only trials where exactly 1 call was found in the audio data.
+4. From `summary_group`, plot the following group histograms; files prepended with `group-`
+
+- Audio segmented call latency
+- Expiratory latency
+- Inspiratory latency
+
+5. Scatter plots of bird medians, using data from `summary_bird`.
+
+- Expiratory latency (s)
+- Inspiratory latency (s)
+- Audio-segmented call latency (s)
+- Inspiratory amplitude (norm to pre)
+- Expiratory amplitude (norm to pre)
+- Audio amplitude
+- Evoked call success rate (% of stimulations)
+
+6. Run group comparison statistics (`get_stats_dm_pam.m`; `ranksum`, Mann-Whitney U-test)
+
+- For all birds/all stims:
+  - exp_amplitude
+  - insp_amplitude
+  - latency_exp
+- For call-evoking stims (audio seg) on birds with good audio:
+  - call_success_rate
+  - median_insp_lat
 
 ### DM-Stimulation + HVC Pharmacology
 
-TODO: pharmacology summary stuff. note where these analyses are found & that they error out in some cases.
-folder: ./pharmacology_analyses
+Pharmacology analyses are conducted in file `run_pharmacology_analyses.m` and directed according to `comparisons` structs (in `./pharmacology_analyses/comparison_directions`). For each bird, these structs provide data indices (which refer to indices in the saved data struct array) and assign a label to each comparison (usually "gabazine" vs "muscimol"). Also in comparisons direction files are variables:
+
+- `data_path`: path to saved `call_breath_seg_data`, which has been renamed `data`.
+- `bird_name`
+- `surgery_state`: `"anesthetized`" or `"awake"`, for distinction on plots.
+
+Note: ouput `figures/pharmacology-summary/pharmacology-stats.mat` contains the following structs (which are described below):
+
+- `comparison_struct`
+- `distributions`
+- `p_vals`
+- `summary_stats`
+- `summary_stats_bird_condition`
+
+> [!Note]
+> Older runs lack `summary_stats_bird_condition` due to a bug.
+
+> [!Important]  
+> `summary_bird` will not be fully populated for HVC pharmacology birds, since it hasn't been implemented for multiple conditions.
+
+1. `run_pharmacology_analyses:construct_bird_distributions`: constructs the `distributions` struct, which contains distributions of various measures. each row is a single condition for a single bird.
+
+- cut data according to comparisons(i).ii_data
+- if `options.SkipPlots == false`, plots the following. general filename format is `{data folder}/figures/pharmacology-summary/{birdname}/{birdname}-{comparison_label}-{measure}` (eg `figures/pharmacology-summary/bu69bu75/bu69bu75-muscimol-aud_amp.svg`)
+  - Multi histograms (overlaid conditions)
+    - Latency: inspiratory/expiratory/audio-segmented
+    - Amplitude: inspiratory/expiratory/audio
+    - Pre-stim respiratory rate
+  - Inspiratory amplitude vs. expiratory amplitude
+  - Timeseries (across stims)
+    - respiratory rate
+    - insp amplitude
+    - exp amplitude
+  - call success by inspiratory amplitude
+- logic & plotting occur in `pharmacology_plot_pipeline`
+
+2. Make `summary_stats_bird_condition`; each row refers to a single condition for a single bird.
+3. Pre/post line plots. Median for each bird/condition.
+
+- Plots show one-call trials unless filename lists 'all_stims'
+- Saved as `figures/pharmacology-summary/{measure}-pre_post`
+
+4. Make `comparison_struct` (during previous plotting step)
+
+- Distribution of medians for each bird/condition, to run statistical test.
+
+5. Run stats (MATLAB builtin `signrank`) for each comparison, generating structs:
+
+- `p_vals`
+- `summary_stats`
 
 ## Parameters
 

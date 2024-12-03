@@ -5,6 +5,7 @@ function p = default_params(p, options)
 arguments
     p {isstruct};
     options.fs {isnumeric} = [];
+    options.radius_seconds {isnumeric} = 1.5;
 end
 
 if ~exist('p', 'var') | isempty(p)  % to enable fetching default params programatically
@@ -51,7 +52,7 @@ end
 
 
 %--windowing
-p.window.radius_seconds = 1.5;  % for each window, time before and after stim (seconds). usually 1.5s, for total window length of 3s
+p.window.radius_seconds = options.radius_seconds;  % for each window, time before and after stim (seconds). usually 1.5s, for total window length of 3s
 p.window.stim_i = p.window.radius_seconds * p.fs + 1;  % stimulation onset frame index
 p.window.stim_cooldown = 100; % ignore a stim if another stim has occured within the last (cooldown) frames (eg, stim flickers for 10 frames)
 
