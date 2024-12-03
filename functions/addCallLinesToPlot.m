@@ -11,7 +11,12 @@ arguments
     options.LineStyle (1,1) string = '--';
 end
 
-holdstate = ishold;  % return to initial hold state after plotting.
+% return to initial hold state after plotting.
+if ishold
+    holdstate = 'on';
+else
+    holdstate = 'off';
+end
 
 hold on;
 colors = autumn(length(offsets));

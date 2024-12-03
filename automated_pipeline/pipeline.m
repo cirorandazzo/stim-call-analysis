@@ -75,6 +75,8 @@ elseif strcmpi(ext, '.mat')  % preprocessed .mat file
     unproc_data = renameStructField(unproc_data, 'audio', 'sound');
     unproc_data.fs = p.fs;
 
+    unproc_data.file.name = p.files.raw_data;
+
 else   % error
     error(['Unknown raw file type: ' ext])
 end

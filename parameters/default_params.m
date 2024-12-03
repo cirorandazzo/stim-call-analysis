@@ -85,7 +85,7 @@ p.breath_seg.insp_thresh = -0.03;
 
 % time (ms) before/after stim to consider breaths pre/post/peri-stimulus.
 p.breath_seg.stim_window.pre_stim_ms  = 0;  % 0ms; positive = before stim
-p.breath_seg.stim_window.post_stim_ms = 10;  % 10ms
+p.breath_seg.stim_window.post_stim_ms = 20;  % 20ms
 
 % stim-induced inspirations
 p.breath_seg.stim_induced_insp_window_ms = [0 35]; % window after stimulation to check for inspiration onset (milliseconds).

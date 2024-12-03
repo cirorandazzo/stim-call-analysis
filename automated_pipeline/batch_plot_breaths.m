@@ -1,7 +1,7 @@
-% batch_plot_spectrograms.m
+% batch_plot_breaths.m
 % 2024.06.7
 % 
-% Batch plot the spectrograms from multiple processed data files.
+% Batch plot the breaths from multiple processed data files.
 % 
 % NOTE: removed parfor from this one, it's decently fast.
 
@@ -12,12 +12,12 @@ stim_i = p.window.stim_i;  % stimulation onset frame index
 
 % focus roughly on stim window 
 xl = [stim_i-fs stim_i+(fs/2)] * 1000 / fs;  % ms. not zeroed on stimulus.
-save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-stim";
+save_root = "./data/figures/breaths";
 
 % xl = [0 stim_i+fs] * 1000 / fs;
 % save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-prestim";
 
-data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
+data_files = dir("./data/processed/**/*data.mat");
 data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
 ext = '.jpeg';
@@ -120,7 +120,7 @@ for i_df = 1:length(data_files)
     
                     bs_tr = data_ic.breath_seg(tr);
 
-                    hold on
+                    hold on;
     
                     % BREATHING
                     centered = bs_tr.centered;
@@ -166,7 +166,7 @@ for i_df = 1:length(data_files)
 
                     % scatter plot
                     ms_maxes = [i_max_pre + pre_stim_amp_normalize_window(1), i_max_post + exp_amp_window_fr(1)] * 1000 / fs;
-                    ms_mins = [i_min_pre + pre_stim_amp_normalize_window(1), i_min_post + stim_i] * 1000 / fs;
+                    ms_mins = [i_min_pre + pre_stim_amp_normalize_window(1), i_min_post + insp_amp_window_fr(1)] * 1000 / fs;
                     ms_latency = (latency_insp_f + stim_i) * 1000 / fs;
 
                     scatter(ms_maxes, [pre_stim_max, post_stim_max], [], exp_color)  % EXPS
@@ -175,18 +175,21 @@ for i_df = 1:length(data_files)
                     scatter(ms_latency, centered(stim_i+latency_insp_f), [], 'g')  % INSP LATENCY
 
                     % BREATH ZERO CROSSINGS
-                    insps = [bs_tr.insps_pre bs_tr.insps_post];
-                    exps = [bs_tr.exps_pre bs_tr.exps_post];
+
+                    % exclude first post-stim exp, used for latency &
+                    % plotted with diff marker
+                    insps = [bs_tr.insps_pre bs_tr.insps_peri bs_tr.insps_post];
+                    exps = [bs_tr.exps_pre bs_tr.exps_peri bs_tr.exps_post(2:end)];
 
                     scatter(insps * 1000/fs, centered(insps), insp_color, Marker='+');
                     scatter(exps  * 1000/fs, centered(exps),  exp_color,  Marker='+');
 
-                    scatter(bs_tr.insps_peri * 1000/fs, centered(bs_tr.insps_peri), insp_color, Marker='x');
-                    scatter(bs_tr.exps_peri  * 1000/fs, centered(bs_tr.exps_peri),  exp_color,  Marker='x');
+                    % EXP-LATENCY point: diff marker
+                    scatter(bs_tr.exps_post(1)  * 1000/fs, centered(bs_tr.exps_post(1)),  exp_color,  Marker='x');
 
                     % 
                     ylim([y_min, y_max]);
-                    hold off
+                    hold off;
                     %% plot a second thing
                     % ax2 = subplot(2,1,2);
                     % hold on;
