@@ -177,8 +177,9 @@ for pfile_i = length(parameter_files):-1:1
     disp('  ');  % newline between birds
 
     clearvars -except ...
-        a current_dir do_plots i merge_files parameter_files run_dt ...
-        start_all summary_bird suppress_reprocess verbose;
+        a current_dir do_plots i main_save_file merge_files ...
+        parameter_files run_dt start_all summary_bird ...
+        suppress_reprocess verbose;
 
 end
 
@@ -190,3 +191,4 @@ disp("    - DM/PAm data: run `dmpam_group_comparisons.m` WITHOUT CLEARING var `s
 disp("    - Pharmacology data: run `run_pharmacology_analyses.m`")
 disp("- Run `./automated_pipeline/batch_plot_spectrograms.m to plot spectrograms with call onsets/offsets.")
 
+save(main_save_file, "do_plots", "merge_files", "parameter_files", "run_dt", "summary_bird", "suppress_reprocess", '-v7.3');
