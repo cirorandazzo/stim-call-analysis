@@ -96,8 +96,10 @@ post_stim_call_window_fr = (post_stim_call_window_ms * fs / 1000) + stim_i;
 for c=length(proc_data):-1:1  % for each condition
     audio = proc_data(c).audio;
     
+    % the names are not good, sorry.
     audio_filt = filterRectifySmooth(audio, fs, f_low, f_high, audio_smoothing_window, filter_type);
     proc_data(c).audio_filt = audio_filt;
+    proc_data(c).audio_filt_only = pj_bandpass(audio, fs, f_low, f_high, filter_type);
 
     [proc_data(c).call_seg.noise_thresholds, ...
         call_onsets, ...
