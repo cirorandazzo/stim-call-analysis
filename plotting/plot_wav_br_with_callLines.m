@@ -1,74 +1,80 @@
 % plot_wav_br_with_callLines.m
 % 2024.04.24
 % 
-% Show 1 trial of wav AND breathing overlaid with audio-segmented calls and
-% vicinity analysis windows/averages
+% Show 1 trial of wav AND breathing overlaid with audio-segmented calls
 % 
 % ONLY works on trials in "call_seg.one_call" substruct
 
-trs = data.call_seg.one_call(25:50);
+% trs = data.call_seg.one_call(25:50);
+% trs = 1:10;
+trs = data.call_seg.multi_calls(1:5);
 
 % % for evtaf rec (spontaneous data)
-fs = 32000;
-stim_i = 32001;  % call exp
-pre_window = 100 * fs / 1000;
-post_window = 100 * fs / 1000;
+% fs = 32000;
+% stim_i = 32001;  % call exp
 
-xl = [28 37] * 1000;
+% % for stim data
+fs = p.fs;
+stim_i = p.window.stim_i;  % stimulation onset frame index
+
+
+xl = [-0.5 1];
 
 
 close all
 
 i_one_call = data.call_seg.one_call;
-for i=length(trs):-1:1
-    figure;
+for i_tr=length(trs):-1:1
+    tr = trs(i_tr);
+    
+    audio = data.audio_filt(tr,:);
+    breath = data.breathing_filt(tr,:);
+
+    x = ([1 : length(audio)] - stim_i )/ fs;
+
     
 
-    tr = trs(i);
-    
-    % a = data.audio_filt(tr,:);
-    % a = data.audioMat(tr,:);
-    a = data.audio(tr,:);
-
-    % onset = onsets{tr};
-    % offset = offsets{tr};
-    onset = data.call_seg.onsets{tr};
-    offset = data.call_seg.offsets{tr};
+    onset = x(data.call_seg.onsets{tr});
+    offset = x(data.call_seg.offsets{tr});
     
     thr = data.call_seg.noise_thresholds(tr);
-    % thr = data.noise_thresholds(tr);
 
-    verts = [onset - pre_window, offset + post_window, stim_i];
+
+    figure;
+    set(gcf, "Position", [1000,591,1306,647] );
 
     % audio
-    subplot(2,1,1)
+    ax_audio = subplot(2,1,1);
     title("tr " + string(tr));
-    plot_wave_callLines(a, onset, offset, verts);
+    
     hold on;
-    plot([0 length(a)], [thr thr], "Color", '#757575');
-    xlim(xl)
-    ylim([0 max(a(onset:offset))]);
+    low = min(audio);
+    high = max(audio);
+
+    % plot_wave_callLines(x, a, onset, offset, verts);
+    plot(x, audio);
+    plot([x(1) x(end)], [thr thr], "Color", '#757575');
+    plot([x(stim_i) x(stim_i)], [low high], "Color", '#757575', 'LineStyle', '--');
+    addCallLinesToPlot(onset, offset, [low high]);
     hold off;
 
     % breathing
-    subplot(2,1,2);
-    % b = data.breathing_filt(tr,:);
-    % b = data.breath_seg(tr).centered;
-
-    i_vic = find(i_one_call == tr);
-
-    b = data.vicinity(i_vic).normd;
-    plot_wave_callLines(b, onset, offset, verts);
+    ax_breath = subplot(2,1,2);
 
     hold on;
-    plot_avg(onset, offset, data.vicinity(i_vic).call_breath_mean);
-    plot_avg(onset-pre_window, onset, data.vicinity(i_vic).pre_call_breath_mean);
-    plot_avg(offset, offset+post_window, data.vicinity(i_vic).post_call_breath_mean);
-
-    plot([0 length(b)], [0 0], "Color", '#757575', 'LineStyle','--');
-    xlim(xl);
-    ylim([min(b) max(b)]);
+    low = min(breath);
+    high = max(breath);
+    
+    plot(x, breath);
+    plot([x(1) x(end)], [0 0], "Color", '#757575', 'LineStyle','--');
+    plot([x(stim_i) x(stim_i)], [low high], "Color", '#757575', 'LineStyle', '--');
+    addCallLinesToPlot(onset, offset, [low high]);
     hold off;
+
+    ylim([min(breath) max(breath)]);
+
+    linkaxes([ax_audio, ax_breath], 'x');
+    xlim(xl);
 end
 
 

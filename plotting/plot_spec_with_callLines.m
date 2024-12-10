@@ -32,10 +32,10 @@ for j=1:length(trs)
 
     tr = trs(j);
 
-    a = data.audio_filt(tr,:);
+    a = data.audio(tr,:);
     onsets = data.call_seg.onsets{tr} * 1000/fs;
     offsets = data.call_seg.offsets{tr} * 1000/fs;
     
-    plotSpectrCallLines(a, onsets, offsets, fs, spec_threshold, n , overlap, f_low, f_high)
+    plotSpectrCallLines(a, onsets, offsets, fs, spec_threshold, n , overlap, f_low, f_high);
     title("tr " + string(tr));
 end

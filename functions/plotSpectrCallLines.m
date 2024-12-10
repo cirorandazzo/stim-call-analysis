@@ -8,7 +8,11 @@ function fig = plotSpectrCallLines(filtsong, onsets, offsets, fs, spec_threshold
 % ylim to use for (1) axis ylim and (2) height of call label lines. TODO: add optional argument
 yl = [f_low f_high];
 
-holdstate = ishold;
+holdstate = "off";
+if ishold
+    holdstate="on";
+end
+
 hold on;
 
 S = ek_spectrogram(filtsong, fs, spec_threshold, n, overlap, f_low, f_high);
