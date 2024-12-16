@@ -1,11 +1,14 @@
 % batch_plot_breaths.m
-% 2024.06.7
+% 2024.06.07
 % 
 % Batch plot the breaths from multiple processed data files.
 % 
+% Note: currently saves 2 slices for each file: one "stim", one "prestim".
+% (this was useful for debugging respiratory rate analysis).
+% 
 % NOTE: removed parfor from this one, it's decently fast.
 
-p = default_params([], fs=30000, radius_seconds=5);  % get default parameters
+p = default_params([], fs=30000, radius_seconds=1.5);  % get default parameters
 
 fs = p.fs;
 stim_i = p.window.stim_i;  % stimulation onset frame index
@@ -17,12 +20,11 @@ save_root = "./data/figures/breaths";
 % xl = [0 stim_i+fs] * 1000 / fs;
 % save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\breaths-prestim";
 
-data_files= dir("C:\Users\ciro\Box\ziggy\archive\20240827-pharmacology-5s_window_radius\processed\**\*data.mat");
-% data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
+data_files = dir("./data/processed/**/*data.mat")
 data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
-ext = '.jpeg';
-skip_existing = false;
+ext = '.svg';
+skip_existing = true;
 save_wav = true;
 
 call_count_cats = {'one_call', 'no_calls', 'multi_calls'};
@@ -98,16 +100,17 @@ for i_df = 1:length(data_files)
 
             folder1 = fullfile(save_root, 'stim', cond_string, call_count_cats{i_ccc});
             mkdir(folder1);
+            
             folder2 = fullfile(save_root, 'prestim', cond_string, call_count_cats{i_ccc});
             mkdir(folder2);
-    
+
             data_ic = data(i_c);
 
             
             for i_tr=1:length(trs)
                 tr = trs(i_tr);
                 figname = strcat(cond_string, "-tr", string(tr), ext);
-                figpath = fullfile(folder, figname);
+                figpath = fullfile(folder1, figname);
 
                 if skip_existing & isfile(figpath)
                     continue
