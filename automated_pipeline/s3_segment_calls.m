@@ -46,7 +46,10 @@ function [call_seg_data] = s3_segment_calls( ...
 %       index (in frames) of stimulation. (scalar)
 %   post_stim_call_window_ms:
 %       2x1 numeric array containing the window in which to look for calls (milliseconds wrt stim onset).
-%   options: Optional keyword parameter.
+%   options: Optional args.
+%       ManualCallSegFilePath: 
+%           path to .mat file containing onsets/offsets.
+%           Will skip segmentation if this arg is not empty.
 %
 % OUTPUT
 %   call_seg_data: 
@@ -54,6 +57,8 @@ function [call_seg_data] = s3_segment_calls( ...
 %       proc data:
 %        - audio_filt: 
 %               filtered, smoothed, rectified audio
+%        - audio_filt_only:
+%               filtered audio (not smoothed + not rectified)
 %        - call_seg: 
 %               struct with fields
 %                   - noise_thresholds:
@@ -88,23 +93,46 @@ arguments
     min_dur
     q
     post_stim_call_window_ms (2,1) {isnumeric}
-    options = [];  % Note: keyword argument was removed.
+    options.ManualCallSegFilePath = [];  % Note: keyword argument was removed.
 end
 
 post_stim_call_window_fr = (post_stim_call_window_ms * fs / 1000) + stim_i;
+
+if ~isempty(options.ManualCallSegFilePath)
+    warning("Using manual file labels from: " + options.ManualCallSegFilePath);
+    manual_labels = load(options.ManualCallSegFilePath);
+
+    assert( length(proc_data) == 1, "Manual labels for >1 condition not implemented.");
+end
 
 for c=length(proc_data):-1:1  % for each condition
     audio = proc_data(c).audio;
     
     % the names are not good, sorry.
+
+    % audio_filt: filtered/rectified/smoothed audio
     audio_filt = filterRectifySmooth(audio, fs, f_low, f_high, audio_smoothing_window, filter_type);
     proc_data(c).audio_filt = audio_filt;
-    proc_data(c).audio_filt_only = pj_bandpass(audio, fs, f_low, f_high, filter_type);
 
-    [proc_data(c).call_seg.noise_thresholds, ...
-        call_onsets, ...
-        call_offsets ...
-        ] = segmentCalls(audio_filt, fs, min_int, min_dur, q, stim_i);
+    % audio_filt_only: filtered audio
+    audio_filt_only = arrayfun( ...
+        @(i) pj_bandpass(audio(i,:),fs,f_low,f_high,filter_type), ...
+        1:size(audio, 1), ...
+        UniformOutput=false ...
+        );
+    audio_filt_only = cell2mat(audio_filt_only');
+    proc_data(c).audio_filt_only = audio_filt_only;
+
+    if ~isempty(options.ManualCallSegFilePath)
+        call_onsets = manual_labels.onsets;
+        call_offsets = manual_labels.offsets;
+        proc_data(c).call_seg.noise_thresholds = inf * ones(size(call_onsets));
+    else
+        [proc_data(c).call_seg.noise_thresholds, ...
+            call_onsets, ...
+            call_offsets ...
+            ] = segmentCalls(audio_filt, fs, min_int, min_dur, q, stim_i);
+    end
 
     %--only take calls within desired window
     

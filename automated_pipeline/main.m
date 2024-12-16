@@ -17,9 +17,10 @@ clear;
 %% OPTIONS
 
 % analyze from all parameter files in this folder
-param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\hvc_pharmacology';  
-% param_file_folder = 'C:\Users\ciro\Documents\code\stim-call-analysis\parameters\dm_pam';  
+% param_file_folder = './parameters/hvc_pharmacology';  
+param_file_folder = './parameters/dm_pam';  
 parameter_files = dir([param_file_folder filesep '**' filesep '*.m'] );
+main_save_file = './data/processed/main_output.mat';  % store summary struct, etc.
 
 % whether to plot individual figures
 do_plots = true;
@@ -27,7 +28,7 @@ do_plots = true;
 % inclusions/exclusions
 to_exclude_from_analysis = {... % .m files to exclude from param folder
     'default_params.m', ... ignore default parameter file
-    % 'bird_080720.m', 'pu81bk43.m' ... stim noise in audio channel
+    % 'bird_080720.m', 'pu81bk43.m' ... stim noise in audio channel - MANUAL LABELS ADDED 2024.12
     }; 
     
 only_these = {};  % only analyze with these parameter files, excluding all others. make sure to include `.m`
@@ -188,7 +189,9 @@ toc(start_all);
 disp("- See var `summary_bird` for quick view of individual summary data.")
 disp("- To get group plots/stats:")
 disp("    - DM/PAm data: run `dmpam_group_comparisons.m` WITHOUT CLEARING var `summary_bird`!")
+disp("      (or, load from `main_output.mat` later.")
 disp("    - Pharmacology data: run `run_pharmacology_analyses.m`")
 disp("- Run `./automated_pipeline/batch_plot_spectrograms.m to plot spectrograms with call onsets/offsets.")
+disp("- Run `./automated_pipeline/batch_plot_breaths.m to plot breath waveforms marked up with points of interest.")
 
 save(main_save_file, "do_plots", "merge_files", "parameter_files", "run_dt", "summary_bird", "suppress_reprocess", '-v7.3');

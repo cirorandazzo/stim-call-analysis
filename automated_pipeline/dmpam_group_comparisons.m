@@ -13,7 +13,9 @@ group_figure_save_format = 'svg';
 plot_scatter_means = true;  % for scatter plots of medians, overlay group means +/- SEM
 
 to_exclude_from_group_plot = {   % rejects from summary_bird before running group analyses
-    '080720', 'pu81bk43' ... stim noise in audio channel
+    % stim noise in audio channel - RESOLVED WITH MANUAL LABELS 2024.12
+    ...% 'pu81bk43'
+    ...% '080720'
 };
 
 mkdir(group_figure_save_folder)
