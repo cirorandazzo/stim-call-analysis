@@ -3,7 +3,7 @@
 % saving/loading parameters
 
 %--files
-p.files.raw_data = 'F:\ziggy\stim_data-20240604\pam\bk68wh15';
+p.files.raw_data = '/Volumes/PlasticBag/ziggy/stim_data-20240604/pam/bk68wh15';
 
 p.files.bird_name = 'bk68wh15';
 p.files.group = 'pam';

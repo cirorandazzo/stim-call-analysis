@@ -4,7 +4,7 @@
 
 
 %--files
-p.files.raw_data = 'F:\ziggy\stim_data-20240604\dm\DMStim_bu69bu75.mat';
+p.files.raw_data = '/Volumes/PlasticBag/ziggy/stim_data-20240604/dm/DMStim_bu69bu75.mat';
 
 p.files.bird_name = 'bu69bu75';
 p.files.group = 'dm';

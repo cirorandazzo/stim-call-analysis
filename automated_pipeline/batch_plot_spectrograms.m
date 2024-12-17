@@ -16,12 +16,13 @@ overlap = 1020;
 f_low = 500;
 f_high = 15000;
 
-data_files = dir("C:\Users\ciro\Documents\code\stim-call-analysis\data\processed\**\*data.mat");
+data_files = dir("./data/processed/**/*-data.mat");
 data_files = arrayfun(@(x) fullfile(x.folder, x.name), data_files, UniformOutput=false);
 
-save_root = "C:\Users\ciro\Documents\code\stim-call-analysis\data\figures\spectrograms";
+% save_root = "./data/figures/spectrograms";
+save_root = "/Users/cirorandazzo/Library/CloudStorage/Box-Box/ziggy/archive/20241216-dmpam-stim_noise/figures/spectrograms";
 
-ext = '.jpeg';
+ext = '.svg';
 skip_existing = true;
 save_wav = true;
 xl = [1000 2000];  % ms. not zeroed on stimulus.
