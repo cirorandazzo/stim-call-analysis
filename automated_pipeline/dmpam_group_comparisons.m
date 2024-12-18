@@ -14,8 +14,8 @@ plot_scatter_means = true;  % for scatter plots of medians, overlay group means 
 
 to_exclude_from_group_plot = {   % rejects from summary_bird before running group analyses
     % stim noise in audio channel - RESOLVED WITH MANUAL LABELS 2024.12
-    ...% 'pu81bk43'
-    ...% '080720'
+    % 'pu81bk43'
+    % '080720'
 };
 
 mkdir(group_figure_save_folder)
@@ -36,6 +36,8 @@ if ~isempty(to_exclude_from_group_plot)
     
     summary_bird_exclusions = summary_bird(ii_exclude);  % save rejects separately
     summary_bird(ii_exclude) = [];  % then delete
+else
+    summary_bird_exclusions = [];
 end
 
 summary_group = make_group_summaries(summary_bird);
@@ -45,6 +47,7 @@ disp("See var `summary_group` for quick view of group summary data.")
 disp("Plotting group summary figures...")
 
 %% COMBINED HISTOGRAMS    
+set(groot, 'DefaultFigureVisible','off');  % suppress figures
 
 % Inspiratory latencies
 fig_group_insp = make_group_histogram( ...
@@ -181,6 +184,7 @@ all_stim_fields = [
 call_only_fields = [
   "call_success_rate"
   "median_insp_lat"
+  "audio_latencies"
 ];
 
 [p_vals_all_stims, stats_all_stims, distrs_all_stims] = get_stats_dm_pam(summary_all_stims, all_stim_fields);
@@ -196,3 +200,8 @@ save(fname, ...
     'summary_group', 'summary_all_stims', 'summary_bird', ...
     'summary_bird_exclusions'...
     );
+
+disp("Saved stat & summary structs.")
+
+set(groot, 'DefaultFigureVisible','on');  % un-suppress figures
+close all

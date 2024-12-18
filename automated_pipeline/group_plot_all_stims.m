@@ -8,6 +8,8 @@
 % (call_breath_seg), so also requires that those datafiles are saved.
 % 
 
+set(groot, 'DefaultFigureVisible','off');  % suppress figures
+
 if ~exist('group_figure_save_folder', 'var')
     group_figure_save_folder = '.';
     group_figure_save_format = 'svg';
@@ -26,9 +28,13 @@ clear keep_fields to_rm
 for i_bird=1:length(summary_bird)
     load(summary_all_stims(i_bird).data_file)  % loads 'data' struct
     
+    summary_all_stims(i_bird).no_calls = data.call_seg.no_calls;
+    summary_all_stims(i_bird).one_call = data.call_seg.one_call;
+
     summary_all_stims(i_bird).exp_amplitude = [data.breath_seg.exp_amplitude];
     summary_all_stims(i_bird).insp_amplitude = [data.breath_seg.insp_amplitude];
     summary_all_stims(i_bird).latency_exp = [data.breath_seg.latency_exp];
+    summary_all_stims(i_bird).latency_insp = [data.breath_seg.latency_insp];
 end
 clear i_bird bs
 
@@ -117,3 +123,39 @@ end
 
 clear i_ftp field fig fig_fname
 
+%% Plot stacked histograms for all, 1call, no call.
+
+n_calls_options = {"all_stims", "one_call", "no_calls"};
+
+bin_widths = [
+    0.5% 'insp_amplitude'
+    0.5% 'exp_amplitude'
+    2% 'latency_exp'
+];
+
+stacked_hist_save_folder = fullfile(group_figure_save_folder, "stacked_histograms");
+
+for i_ftp = 1:length(fields_to_plot)
+    field = fields_to_plot{i_ftp};
+    
+    this_folder = fullfile(stacked_hist_save_folder, field);
+    mkdir(this_folder);
+
+    for i_n_call = 1:length(n_calls_options)
+        n_calls = n_calls_options{i_n_call};
+
+        fig_fname = fullfile( ...
+            this_folder, ...
+            append('stacked_hist-', field, '-', n_calls, '.', group_figure_save_format) ...
+            );
+
+        fig = plotStackedHistogram(summary_all_stims, field, n_calls, BinWidth=bin_widths(i_ftp));
+        fig.set("Position", [1 1 2560 1336]);  % make big
+        saveas(fig, fig_fname);
+        close(fig);
+    end
+end
+
+clear i_ftp field fig fig_fname
+
+set(groot, 'DefaultFigureVisible','on');  % suppress figures
