@@ -217,8 +217,8 @@ for i_cond = 1:length(comparison_struct)
         this_field = this_cond.(fields{i_fn});
         p_vals(i_cond).(fields{i_fn}) = signrank(this_field.baseline, this_field.drug);
 
-        summary_stats_baseline(i_cond).(fields{i_fn}) = make_stat_summary(this_field.baseline);
-        summary_stats_drug(i_cond).(fields{i_fn}) = make_stat_summary(this_field.drug);
+        summary_stats_baseline(i_cond).(fields{i_fn}) = summarize_distribution(this_field.baseline);
+        summary_stats_drug(i_cond).(fields{i_fn}) = summarize_distribution(this_field.drug);
     end
 end
 
@@ -245,34 +245,6 @@ function comparison_struct = add_to_comparison_struct(comparison_struct, compari
 
     comparison_struct(i_cond).(fieldname).baseline(end+1) = data(1);
     comparison_struct(i_cond).(fieldname).drug(end+1) = data(2);
-end
-
-function statistics = get_summary_stats(distr, options)
-
-    arguments
-        distr;
-        options.statFunction = @make_stat_summary;
-    end
-
-    if isstruct(distr)  % runs recursively
-
-        % pass options recursively; need cell
-        C = [fieldnames(options).'; struct2cell(options).'];
-        C=C(:).';
-
-        statistics = arrayfun( ...
-            @(x) structfun(@(y) get_summary_stats(y, C{:}), x, "UniformOutput", false), ...
-            distr...
-        );
-
-    elseif ~isnumeric(distr) | isscalar(distr) | isempty(distr)
-        statistics = distr;
-
-    else  % this actually is a distribution; compute stats
-        statistics=options.statFunction(distr);
-
-    end
-
 end
 
 function distributions = construct_bird_distributions(data_path, bird_name, comparisons, save_prefix, fig_ext, options)
